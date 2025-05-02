@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NullDock</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+  </head>
+  <body id="body">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #282c34;
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+      }
+
+      .no-select {
+        user-select: none;
+      }
+
+      #search-bar-container {
+        display: flex;
+        align-items: center;
+        width: 580px;
+        height: 40px;
+        border-radius: 20px;
+        padding: 5px 10px;
+        border: none;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        font-size: 16px;
+      }
+
+      #search-icon {
+        color: white;
+        font-size: 20px;
+        margin-right: 10px;
+      }
+
+      #search-bar {
+        flex: 1;
+        height: 100%;
+        border: none;
+        background-color: transparent;
+        color: white;
+        font-size: 16px;
+        outline: none;
+        padding: 0;
+        line-height: 40px;
+      }
+
+      #search-bar::placeholder {
+        color: white;
+        opacity: 0.5;
+        line-height: 40px;
+      }
+
+      #settings-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        height: 48px;
+        width: 48px;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        border-radius: 20%;
+        padding: 4px;
+      }
+
+      #settings-btn {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        height: inherit;
+        width: inherit;
+        padding: 0 0 0 0;
+      }
+
+      #settings-btn img {
+        width: 48px;
+        height: 48px;
+      }
+
+      #settings-icon {
+        color: white;
+        font-size: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      @keyframes spin-clockwise {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes spin-counterclockwise {
+        from {
+          transform: rotate(360deg);
+        }
+        to {
+          transform: rotate(0deg);
+        }
+      }
+
+      .spin-cc {
+        animation: spin-clockwise 1s ease;
+      }
+
+      .spin-c {
+        animation: spin-counterclockwise 1s ease;
+      }
+    </style>
+    <div id="search-bar-container">
+      <span class="material-symbols-outlined" id="search-icon">search</span>
+      <input type="text" id="search-bar" placeholder="Search..." />
+    </div>
+
+    <div id="settings-container" class="no-select">
+      <button id="settings-btn" class="no-select">
+        <span class="material-symbols-outlined" id="settings-icon"
+          >settings</span
+        >
+      </button>
+    </div>
+
+    <input type="file" id="fileInput" style="display: none" />
+
+    <script>
+      const body = document.getElementById("body");
+      const fileInput = document.getElementById("fileInput");
+      const settings_btn = document.getElementById("settings-btn");
+
+      settings_btn.addEventListener("click", () => {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const dataUrl = event.target.result;
+            localStorage.setItem("config_backgroundImage", dataUrl);
+            body.style.backgroundImage = `url("${dataUrl}")`;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const backgroundImage = localStorage.getItem("config_backgroundImage");
+        if (backgroundImage) {
+          body.style.backgroundImage = `url("${backgroundImage}")`;
+        }
+      });
+
+      function startRecognition() {
+        const output = document.getElementById("output");
+
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          alert("Sorry, your browser does not support Speech Recognition.");
+          return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          output.textContent = "Listening...";
+        };
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          output.textContent = transcript;
+        };
+
+        recognition.onerror = (event) => {
+          output.textContent = "Error: " + event.error;
+        };
+
+        recognition.start();
+      }
+
+      const settingsIcon = document.getElementById("settings-icon");
+      let isClockwise = true;
+
+      document.getElementById("settings-btn").addEventListener("click", () => {
+        if (isClockwise) {
+          settingsIcon.classList.remove("spin-c");
+          settingsIcon.classList.add("spin-cc");
+        } else {
+          settingsIcon.classList.remove("spin-cc");
+          settingsIcon.classList.add("spin-c");
+        }
+        isClockwise = !isClockwise;
+      });
+    </script>
+  </body>
+</html>
