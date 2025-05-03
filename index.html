@@ -8,6 +8,11 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
       rel="stylesheet"
     />
+    <link
+      rel="shortcut icon"
+      href="https://i.ibb.co/60G9C31m/New-Projecmt.png"
+      type="image/x-icon"
+    />
   </head>
   <body id="body">
     <style>
@@ -22,8 +27,10 @@
         background-repeat: no-repeat;
         background-size: cover;
         background-position: center;
+        width: 100%;
+        transition: width 0.3s ease;
+        flex-direction: column;
       }
-
       .no-select {
         user-select: none;
       }
@@ -41,6 +48,14 @@
         backdrop-filter: blur(5px) brightness(0.7);
         -webkit-backdrop-filter: blur(5px) brightness(0.7);
         font-size: 16px;
+        flex-direction: column;
+      }
+
+      #inputs {
+        width: 100%;
+        height: 40px;
+        display: flex;
+        align-items: center;
       }
 
       #search-icon {
@@ -119,7 +134,7 @@
           transform: rotate(180deg);
         }
         to {
-          transform: rotate(0deg);
+          transform: rotate(0);
         }
       }
 
@@ -131,14 +146,16 @@
         animation: spin-counterclockwise 0.6s ease;
       }
 
-      #microphone-icon {
+      #microphone-icon,
+      #camera-icon {
         color: white;
         font-size: 20px;
         margin-left: 10px;
         cursor: pointer;
       }
 
-      #microphone-icon:hover {
+      #microphone-icon:hover,
+      #camera-icon:hover {
         color: #ccc;
       }
 
@@ -154,7 +171,7 @@
         -webkit-backdrop-filter: blur(5px) brightness(0.7);
         border-radius: 10px;
         padding: 10px;
-        animation: fade-in 0.3s ease-out;
+        animation: fade-in 0.3s ease-in-out;
         width: 200px;
       }
 
@@ -270,11 +287,497 @@
         animation: error 0.6s ease-in-out;
         border-radius: 4px;
       }
+
+      @keyframes openSuggestions {
+        0% {
+          height: 40px;
+          transform: translateY(0);
+        }
+        100% {
+          height: 160px;
+          transform: translateY(60px);
+        }
+      }
+
+      .open {
+        animation: openSuggestions 1s ease forwards;
+      }
+
+      @keyframes closeSuggestions {
+        0% {
+          height: 160px;
+          transform: translateY(60px);
+        }
+        100% {
+          height: 40px;
+          transform: translateY(0);
+        }
+      }
+
+      .close {
+        animation: closeSuggestions 1s ease forwards;
+      }
+
+      #suggestions {
+        width: 100%;
+        max-height: 200px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        overflow-x: hidden;
+      }
+
+      .suggestion {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        opacity: 0;
+        transform: translateX(30px);
+        animation: suggestionIn 0.3s ease-out forwards;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .suggestion:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      @keyframes suggestionIn {
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, black, transparent);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding-top: 100px;
+        z-index: 999;
+        animation: fadeFromTop 0.4s ease-out forwards;
+      }
+
+      .modal.hidden {
+        display: none;
+      }
+
+      .modal-content {
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(6px) brightness(0.7);
+        -webkit-backdrop-filter: blur(6px) brightness(0.7);
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        display: flex;
+        gap: 10px;
+      }
+
+      .modal-content input {
+        background: transparent;
+        border: none;
+        color: white;
+        outline: none;
+        font-size: 16px;
+        padding: 5px 10px;
+        width: 300px;
+      }
+
+      .modal-content input::placeholder {
+        color: white;
+        opacity: 0.5;
+      }
+
+      .modal-content button {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 6px;
+      }
+
+      .modal-content button:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      @keyframes fadeFromTop {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      #theme-settings-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 354px;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.21);
+        backdrop-filter: blur(6px) brightness(0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9998;
+      }
+
+      #theme-settings-title {
+        color: white;
+        font-size: 24px;
+        margin: 0;
+        text-align: center;
+
+        width: 280px;
+        padding: 8px;
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(6px) brightness(0.7);
+        -webkit-backdrop-filter: blur(6px) brightness(0.7);
+        border-radius: 12px;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        position: fixed;
+        top: 10px;
+      }
+
+      #theme-settings {
+        position: fixed;
+        top: 60px;
+        width: 300px;
+        height: 86%;
+        background-color: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(6px) brightness(0.2);
+        -webkit-backdrop-filter: blur(6px) brightness(0.7);
+        padding: 20px;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        z-index: 99999;
+        flex-direction: column;
+      }
+      #background-settings {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+      #background-settings h2 {
+        color: white;
+        font-size: 24px;
+        margin: 0;
+      }
+      #background-preview {
+        width: 300px;
+        height: 300px;
+        border-radius: 12px;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        transition: opacity 0.3s ease-in-out;
+        object-position: center;
+        object-fit: contain;
+      }
+      #background-button,
+      #reset-background-button {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+      #background-button:hover,
+      #reset-background-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Add styles for the full background image */
+      #full-background-image {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -1; /* Ensure it stays behind everything */
+        pointer-events: none; /* Prevent interaction */
+        transition: width 0.3s ease;
+      }
+      .fancy-break {
+        border: none;
+        border-top: 4px solid #655f65;
+        margin: 1em 0;
+        height: 1px;
+        width: 98%;
+        margin-top: 24px;
+        margin-bottom: 24px;
+      }
+
+      #close-theme-settings {
+        position: absolute;
+        top: 16px;
+        right: 35px;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+
+      #close-theme-settings:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideOut {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+
+      #theme-settings-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 354px;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.21);
+        backdrop-filter: blur(6px) brightness(0.2);
+        justify-content: center;
+        align-items: center;
+        z-index: 9998;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        opacity: 0;
+        transform: translateX(100%); /* hidden off-screen */
+      }
+      #theme-settings-container.visible {
+        opacity: 1 !important;
+        transform: translateX(0) !important; /* slide in */
+      }
+
+      /* Light Mode Styles */
+      .light-mode {
+        background-color: #f5f5f5;
+        color: #333;
+      }
+
+      .light-mode #search-bar-container,
+      .light-mode #settings-container,
+      .light-mode #settings-dropdown button,
+      .light-mode .modal-content,
+      .light-mode #theme-settings,
+      .light-mode #theme-settings-container {
+        background-color: rgba(255, 255, 255, 0.8);
+        color: #333;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode #search-bar::placeholder {
+        color: #666;
+        opacity: 0.7;
+      }
+
+      .light-mode #search-icon,
+      .light-mode #microphone-icon,
+      .light-mode #camera-icon,
+      .light-mode #settings-icon {
+        color: #333;
+      }
+
+      .light-mode #settings-dropdown button:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+
+      .light-mode .suggestion {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .light-mode .suggestion:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode .modal {
+        background: linear-gradient(to bottom, white, transparent);
+      }
+
+      .light-mode .modal-content input {
+        color: #333;
+      }
+
+      .light-mode .modal-content input::placeholder {
+        color: #666;
+      }
+
+      .light-mode .modal-content button {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .light-mode .modal-content button:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode #background-preview {
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode #background-button,
+      .light-mode #reset-background-button {
+        background-color: rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .light-mode #background-button:hover,
+      .light-mode #reset-background-button:hover {
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode #theme-settings-title {
+        background-color: rgba(255, 255, 255, 0.8);
+        color: #333;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode #close-theme-settings {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+      }
+
+      .light-mode #close-theme-settings:hover {
+        background: rgba(0, 0, 0, 0.2);
+      }
+
+      .light-mode .fancy-break {
+        border-top: 4px solid #ccc;
+      }
+
+      .light-mode #full-background-image {
+        filter: brightness(1.1);
+      }
+
+      /* Dark Mode Styles */
+      .dark-mode {
+        background-color: #282c34;
+        color: white;
+      }
+
+      .dark-mode #search-bar-container,
+      .dark-mode #settings-container,
+      .dark-mode #settings-dropdown button,
+      .dark-mode .modal-content,
+      .dark-mode #theme-settings {
+        background-color: rgba(0, 0, 0, 0.3);
+        color: white;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+      }
+
+      .dark-mode #search-bar::placeholder {
+        color: white;
+        opacity: 0.5;
+      }
+
+      .dark-mode .suggestion {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+
+      .dark-mode .suggestion:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Add styles for the logo image */
+      #logo {
+        width: 150px;
+        height: auto;
+        margin-bottom: 220px;
+        position: fixed;
+      }
+
+      #update-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        height: 48px;
+        width: 48px;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        border-radius: 20%;
+        padding: 4px;
+        z-index: 1000;
+      }
+
+      #update-btn {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        height: inherit;
+        width: inherit;
+        padding: 0;
+      }
+
+      #update-icon {
+        color: white;
+        font-size: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
     </style>
+    <img
+      id="full-background-image"
+      class="no-select"
+      src=""
+      alt="Background Image"
+    />
+    <!-- Add the logo image -->
+    <img
+      id="logo"
+      src="https://i.ibb.co/60G9C31m/New-Projecmt.png"
+      alt="Logo"
+    />
     <div id="search-bar-container">
-      <span class="material-symbols-outlined" id="search-icon">search</span>
-      <input type="text" id="search-bar" placeholder="Search..." />
-      <span class="material-symbols-outlined" id="microphone-icon">mic</span>
+      <div id="inputs">
+        <span class="material-symbols-outlined" id="search-icon">search</span>
+        <input type="text" id="search-bar" placeholder="Search..." />
+        <span class="material-symbols-outlined" id="microphone-icon">mic</span>
+        <span class="material-symbols-outlined" id="camera-icon"
+          >camera_alt</span
+        >
+      </div>
+      <div id="suggestions"></div>
     </div>
 
     <div id="settings-container" class="no-select">
@@ -289,65 +792,399 @@
         </button>
       </div>
     </div>
+    <div id="image-modal" class="modal hidden">
+      <div class="modal-content">
+        <input
+          id="image-url-input"
+          type="text"
+          placeholder="Paste image URL here..."
+        />
+        <button id="image-url-submit">Search</button>
+      </div>
+    </div>
+
+    <div id="theme-settings-container">
+      <h1 id="theme-settings-title">Theme Settings</h1>
+      <button id="close-theme-settings" class="no-select">X</button>
+      <!-- Add this button -->
+      <div id="theme-settings">
+        <div id="background-settings">
+          <h2 id="current-background-text"></h2>
+          <img
+            id="background-preview"
+            src=""
+            alt="background image preview"
+            style="display: none"
+            class="no-select"
+          />
+          <p
+            id="background-placeholder"
+            style="color: white; text-align: center"
+            class="no-select"
+          >
+            Select a background image
+          </p>
+
+          <button id="background-button" class="no-select">
+            Change Background
+          </button>
+          <button id="reset-background-button" class="no-select">
+            Reset Background
+          </button>
+
+          <!-- Add Light/Dark Mode Buttons -->
+          <button id="light-mode-button" class="no-select">Light Mode</button>
+          <button id="dark-mode-button" class="no-select">Dark Mode</button>
+        </div>
+        <hr class="fancy-break" />
+      </div>
+    </div>
+    <div id="update-container" class="no-select">
+      <button id="update-btn" class="no-select">
+        <span class="material-symbols-outlined" id="update-icon"
+          >browser_updated</span
+        >
+      </button>
+    </div>
+
     <input type="file" id="fileInput" style="display: none" />
 
     <script>
+      //==================================================
+      // #region DOM Elements
       const body = document.getElementById("body");
+      const fullBackgroundImage = document.getElementById(
+        "full-background-image"
+      );
       const fileInput = document.getElementById("fileInput");
       const settingsBtn = document.getElementById("settings-btn");
       const settingsDropdown = document.getElementById("settings-dropdown");
       const themeButton = document.getElementById("theme");
       const searchBar = document.getElementById("search-bar");
+      const suggestionsBox = document.getElementById("suggestions");
+      const backgroundPreview = document.getElementById("background-preview");
+      const resetBackgroundButton = document.getElementById(
+        "reset-background-button"
+      );
+      const backgroundButton = document.getElementById("background-button");
+      const settingsContainer = document.getElementById("settings-container");
+      const backgroundPlaceholder = document.getElementById(
+        "background-placeholder"
+      );
+      const themeSettingsContainer = document.getElementById(
+        "theme-settings-container"
+      );
+      const closeThemeSettingsButton = document.getElementById(
+        "close-theme-settings"
+      );
+      const modal = document.getElementById("image-modal");
+      const imageInput = document.getElementById("image-url-input");
+      const imageSubmit = document.getElementById("image-url-submit");
+      const settingsIcon = document.getElementById("settings-icon");
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Variables
       let fileMode;
+      let searchBarState = "closed";
+      let themeSettingsVisible = false;
+      let isClockwise = true;
+      let typingTimer;
+      const debounceDelay = 500;
+      const storedBackground = localStorage.getItem("config_backgroundImage");
+      // #endregion
+      //==================================================
 
-      settingsBtn.addEventListener("click", () => {
-        const isVisible = settingsDropdown.style.display === "flex";
+      //==================================================
+      // #region Background Management
+      if (!storedBackground) {
+        backgroundPreview.style.display = "none";
+        backgroundPlaceholder.style.display = "block";
+        fullBackgroundImage.style.opacity = "0";
+        fullBackgroundImage.src = "";
+      } else {
+        backgroundPreview.src = storedBackground;
+        fullBackgroundImage.src = storedBackground;
+        backgroundPreview.style.display = "block";
+        backgroundPlaceholder.style.display = "none";
+        fullBackgroundImage.style.opacity = "1";
+      }
 
-        if (isVisible) {
-          settingsDropdown.style.animation = "fade-out 0.3s ease-out";
-          setTimeout(() => {
-            settingsDropdown.style.display = "none";
-          }, 300);
-        } else {
-          settingsDropdown.style.display = "flex";
-          settingsDropdown.style.animation = "fade-in 0.3s ease-out";
-        }
-      });
-
-      // Handle background change on theme button click
-      themeButton.addEventListener("click", () => {
+      backgroundButton.addEventListener("click", () => {
         fileMode = "background";
         fileInput.accept = "image/*";
         fileInput.click();
       });
 
+      resetBackgroundButton.addEventListener("click", () => {
+        localStorage.removeItem("config_backgroundImage");
+        fullBackgroundImage.src = "";
+        fullBackgroundImage.style.opacity = "0";
+        backgroundPreview.style.display = "none";
+        backgroundPlaceholder.style.display = "block";
+      });
+
       fileInput.addEventListener("change", () => {
         const file = fileInput.files[0];
         if (file) {
-          const reader = new FileReader();
           if (fileMode === "background") {
+            const reader = new FileReader();
             reader.onload = function (event) {
               const dataUrl = event.target.result;
               localStorage.setItem("config_backgroundImage", dataUrl);
-              body.style.backgroundImage = `url("${dataUrl}")`;
+              fullBackgroundImage.src = dataUrl;
+              backgroundPreview.src = dataUrl;
+              fullBackgroundImage.style.opacity = "1";
+              backgroundPreview.style.display = "block";
+              backgroundPlaceholder.style.display = "none";
             };
             reader.readAsDataURL(file);
           }
         }
       });
 
-      // Load background image from localStorage on page load
       document.addEventListener("DOMContentLoaded", () => {
         const backgroundImage = localStorage.getItem("config_backgroundImage");
         if (backgroundImage) {
-          body.style.backgroundImage = `url("${backgroundImage}")`;
+          fullBackgroundImage.src = backgroundImage;
+        }
+      });
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Theme Settings
+      themeButton.addEventListener("click", () => {
+        themeSettingsVisible = !themeSettingsVisible;
+        updateBodyWidth();
+        settingsBtn.click();
+      });
+
+      closeThemeSettingsButton.addEventListener("click", () => {
+        themeSettingsVisible = false;
+        updateBodyWidth();
+      });
+
+      function updateBodyWidth() {
+        if (themeSettingsVisible) {
+          themeSettingsContainer.classList.add("visible");
+
+          const containerWidth = parseFloat(
+            getComputedStyle(themeSettingsContainer).width
+          );
+
+          document.body.style.width = `${window.innerWidth - containerWidth}px`;
+          fullBackgroundImage.style.width = `${
+            window.innerWidth - containerWidth
+          }px`;
+
+          backgroundPreview.style.setProperty(
+            "width",
+            `${document.body.clientWidth / 4}px`,
+            "important"
+          );
+          backgroundPreview.style.setProperty(
+            "height",
+            `${document.body.clientHeight / 4}px`,
+            "important"
+          );
+
+          settingsContainer.style.setProperty(
+            "right",
+            `${containerWidth + 20}px`,
+            "important"
+          );
+        } else {
+          themeSettingsContainer.classList.remove("visible");
+
+          document.body.style.width = `${window.innerWidth}px`;
+          fullBackgroundImage.style.width = `${window.innerWidth}px`;
+
+          backgroundPreview.style.setProperty(
+            "width",
+            `${document.body.clientWidth / 4}px`,
+            "important"
+          );
+          backgroundPreview.style.setProperty(
+            "height",
+            `${document.body.clientHeight / 4}px`,
+            "important"
+          );
+
+          settingsContainer.style.setProperty("right", "20px", "important");
+        }
+      }
+
+      window.addEventListener("resize", updateBodyWidth);
+      updateBodyWidth();
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Settings Dropdown
+      settingsBtn.addEventListener("click", () => {
+        const isVisible = settingsDropdown.style.display === "flex";
+        settingsDropdown.style.animation = isVisible
+          ? "fade-out 0.3s ease-out"
+          : "fade-in 0.3s ease-out";
+        setTimeout(() => {
+          settingsDropdown.style.display = isVisible ? "none" : "flex";
+        }, 300);
+
+        settingsIcon.classList.toggle("spin-c", !isClockwise);
+        settingsIcon.classList.toggle("spin-cc", isClockwise);
+        isClockwise = !isClockwise;
+      });
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Search Bar and Suggestions
+      searchBar.addEventListener("input", () => {
+        const inputValue = searchBar.value.trim();
+
+        clearTimeout(typingTimer);
+
+        if (!inputValue) {
+          suggestionsBox.innerHTML = "";
+          if (searchBarState === "open") {
+            searchBar.parentElement.parentElement.classList.remove("open");
+            searchBar.parentElement.parentElement.classList.add("close");
+            searchBarState = "closed";
+          }
+          return;
+        }
+
+        if (searchBarState === "closed") {
+          searchBar.parentElement.parentElement.classList.remove("close");
+          searchBar.parentElement.parentElement.classList.add("open");
+          searchBarState = "open";
+        }
+
+        typingTimer = setTimeout(() => {
+          fetchGoogleSuggestions(inputValue);
+        }, debounceDelay);
+      });
+
+      searchBar.addEventListener("focus", () => {
+        if (searchBarState === "closed" && searchBar.value !== "") {
+          fetchGoogleSuggestions(searchBar.value);
+          searchBar.parentElement.parentElement.classList.remove("close");
+          searchBar.parentElement.parentElement.classList.add("open");
+          searchBarState = "open";
         }
       });
 
+      document.addEventListener("click", (e) => {
+        if (
+          searchBarState === "open" &&
+          !searchBar.contains(e.target) &&
+          !searchBar.parentElement.contains(e.target)
+        ) {
+          searchBar.parentElement.parentElement.classList.remove("open");
+          searchBar.parentElement.parentElement.classList.add("close");
+          searchBarState = "closed";
+          suggestionsBox.innerHTML = "";
+        }
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "/" && e.target !== searchBar) {
+          e.preventDefault();
+          searchBar.focus();
+        }
+      });
+
+      searchBar.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          window.open(
+            "https://www.google.com/search?q=" +
+              encodeURIComponent(searchBar.value),
+            "_blank"
+          );
+        }
+      });
+
+      function fetchGoogleSuggestions(query) {
+        const endpoint = `https://api.duckduckgo.com/?q=${encodeURIComponent(
+          query
+        )}&format=json&no_html=1`;
+
+        fetch(endpoint)
+          .then((res) => res.json())
+          .then((data) => {
+            const allTopics = [];
+
+            const extractTopics = (topic) => {
+              if (topic && topic.Text && typeof topic.Text === "string") {
+                const text = topic.Text.trim();
+                if (text.length > 0 && text.length <= 60) {
+                  allTopics.push(text);
+                }
+              }
+            };
+
+            (data.RelatedTopics || []).forEach((topic) => {
+              if (topic.Topics && Array.isArray(topic.Topics)) {
+                topic.Topics.forEach(extractTopics);
+              } else {
+                extractTopics(topic);
+              }
+            });
+
+            const seen = new Set();
+            const unique = allTopics.filter((text) => {
+              const lower = text.toLowerCase();
+              if (seen.has(lower)) return false;
+              seen.add(lower);
+              return true;
+            });
+
+            const startsWith = unique.filter((t) =>
+              t.toLowerCase().startsWith(query.toLowerCase())
+            );
+            const rest = unique.filter(
+              (t) => !t.toLowerCase().startsWith(query.toLowerCase())
+            );
+
+            const suggestions = [...startsWith, ...rest].slice(0, 3);
+            showSuggestions(suggestions, query);
+          })
+          .catch((err) =>
+            console.error("DuckDuckGo suggestion fetch error:", err)
+          );
+      }
+
+      function showSuggestions(suggestions, input) {
+        suggestionsBox.innerHTML = "";
+
+        const escapedInput = input.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, "\\$&");
+
+        suggestions.forEach((text, index) => {
+          const regex = new RegExp(`(${escapedInput})`, "i");
+          const div = document.createElement("div");
+          div.innerHTML = text.replace(regex, "<strong>$1</strong>");
+          div.className = "suggestion";
+          div.style.animationDelay = `${index * 80}ms`;
+          div.addEventListener("click", () => {
+            searchBar.blur();
+            window.open(
+              "https://www.google.com/search?q=" + encodeURIComponent(text),
+              "_blank"
+            );
+          });
+          suggestionsBox.appendChild(div);
+        });
+      }
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Speech Recognition
       function startRecognition() {
         searchBar.classList.add("listening-text");
         searchBar.placeholder = "Listening...";
-
         const SpeechRecognition =
           window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -359,7 +1196,6 @@
         recognition.lang = "en-US";
         recognition.interimResults = true;
         recognition.maxAlternatives = 1;
-
         let finalTranscript = "";
 
         recognition.onresult = (event) => {
@@ -367,7 +1203,6 @@
           for (let i = 0; i < event.results.length; i++) {
             const result = event.results[i];
             const transcript = result[0].transcript;
-
             if (result.isFinal) {
               finalTranscript += transcript + " ";
               searchBar.focus();
@@ -379,6 +1214,7 @@
                 bubbles: true,
                 cancelable: true,
               });
+              fetchGoogleSuggestions(searchBar.value.trim());
               searchBar.dispatchEvent(enter);
             } else {
               interimTranscript += transcript;
@@ -399,84 +1235,111 @@
         recognition.start();
       }
 
-      const settingsIcon = document.getElementById("settings-icon");
-      let isClockwise = true;
-
-      document.getElementById("settings-btn").addEventListener("click", () => {
-        if (isClockwise) {
-          settingsIcon.classList.remove("spin-c");
-          settingsIcon.classList.add("spin-cc");
-        } else {
-          settingsIcon.classList.remove("spin-cc");
-          settingsIcon.classList.add("spin-c");
-        }
-        isClockwise = !isClockwise;
-      });
       document
         .getElementById("microphone-icon")
         .addEventListener("click", startRecognition);
-      searchBar.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && searchBar.value.trim() !== "") {
-          window.open("https://www.google.com/search?q=" + searchBar.value);
-        } else if (e.key === "Enter" && searchBar.value.trim() === "") {
-          const originalPlaceholder = searchBar.placeholder;
-          searchBar.placeholder = "Please enter a search term!";
-          searchBar.classList.add("error-shake");
-          setTimeout(() => {
-            searchBar.classList.remove("error-shake");
-            searchBar.placeholder = originalPlaceholder;
-          }, 1200);
+      // #endregion
+      //==================================================
+
+      //==================================================
+      // #region Image Modal
+      document.getElementById("camera-icon").addEventListener("click", () => {
+        modal.classList.remove("hidden");
+        imageInput.value = "";
+        imageInput.focus();
+      });
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.add("hidden");
         }
       });
-      function getAverageColorFromImage(image) {
-        return new Promise((resolve, reject) => {
-          if (!image.complete) {
-            image.onload = () => resolve(getAverageColorFromImage(image));
-            image.onerror = reject;
-            return;
-          }
 
-          const canvas = document.createElement("canvas");
-          canvas.width = image.naturalWidth;
-          canvas.height = image.naturalHeight;
+      imageSubmit.addEventListener("click", () => {
+        const url = imageInput.value.trim();
+        if (
+          /\.(jpeg|jpg|png|gif|webp|bmp|tiff)/i.test(url) &&
+          !url.toLowerCase().includes(".svg")
+        ) {
+          const query = encodeURIComponent(url);
+          window.open("https://lens.google.com/uploadbyurl?url=" + query);
+          modal.classList.add("hidden");
+        } else {
+          imageInput.classList.add("error-shake");
+          setTimeout(() => imageInput.classList.remove("error-shake"), 600);
+        }
+      });
 
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          ctx.drawImage(image, 0, 0);
+      imageInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") imageSubmit.click();
+      });
+      // #endregion
+      //==================================================
 
-          try {
-            const { data } = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            let r = 0,
-              g = 0,
-              b = 0,
-              count = 0;
+      // Get Light/Dark Mode Buttons
+      const lightModeButton = document.getElementById("light-mode-button");
+      const darkModeButton = document.getElementById("dark-mode-button");
 
-            for (let i = 0; i < data.length; i += 4) {
-              const alpha = data[i + 3];
-              if (alpha === 0) continue; // skip transparent pixels
-
-              r += data[i];
-              g += data[i + 1];
-              b += data[i + 2];
-              count++;
-            }
-
-            if (count === 0) return resolve({ r: 0, g: 0, b: 0 });
-
-            resolve({
-              r: Math.round(r / count),
-              g: Math.round(g / count),
-              b: Math.round(b / count),
-            });
-          } catch (err) {
-            reject(err);
-          }
-        });
+      // Apply Saved Theme on Load
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) {
+        document.body.classList.add(savedTheme);
       }
+
+      // Light Mode Button Click Event
+      lightModeButton.addEventListener("click", () => {
+        document.body.classList.remove("dark-mode");
+        document.body.classList.add("light-mode");
+        localStorage.setItem("theme", "light-mode");
+      });
+
+      // Dark Mode Button Click Event
+      darkModeButton.addEventListener("click", () => {
+        document.body.classList.remove("light-mode");
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("theme", "dark-mode");
+      });
+      async function updateHTML() {
+        const remoteUrl =
+          "https://cdn.jsdelivr.net/gh/thejumbler2/nullDock@main/index.html";
+
+        try {
+          // Step 1: Ask user to pick this HTML file
+          const [handle] = await window.showOpenFilePicker({
+            types: [
+              {
+                description: "HTML Files",
+                accept: { "text/html": [".html"] },
+              },
+            ],
+            excludeAcceptAllOption: true,
+            multiple: false,
+          });
+
+          // Step 2: Confirm permission to write
+          const writable = await handle.createWritable();
+
+          // Step 3: Fetch latest HTML from remote
+          const response = await fetch(remoteUrl);
+          if (!response.ok) throw new Error("Failed to fetch remote HTML");
+
+          const newContent = await response.text();
+
+          // Step 4: Overwrite the file
+          await writable.write(newContent);
+          await writable.close();
+
+          alert("Update successful! Reloading...");
+          location.reload();
+        } catch (err) {
+          console.error(err);
+          alert("Update failed:\n" + err.message);
+        }
+      }
+
+      document
+        .getElementById("update-btn")
+        .addEventListener("click", updateHTML);
     </script>
   </body>
 </html>
