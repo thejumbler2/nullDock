@@ -1316,7 +1316,7 @@
             multiple: false,
           });
 
-          // Step 2: Confirm permission to write
+          // Step 2: Create a writable stream only after the user selects the file (triggered by user click)
           const writable = await handle.createWritable();
 
           // Step 3: Fetch latest HTML from remote
@@ -1325,7 +1325,7 @@
 
           const newContent = await response.text();
 
-          // Step 4: Overwrite the file
+          // Step 4: Write the new content to the file
           await writable.write(newContent);
           await writable.close();
 
@@ -1336,7 +1336,6 @@
           alert("Update failed:\n" + err.message);
         }
       }
-
       document
         .getElementById("update-btn")
         .addEventListener("click", updateHTML);
