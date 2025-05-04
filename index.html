@@ -1004,6 +1004,38 @@
     <input type="file" id="fileInput" style="display: none" />
 
     <script>
+      let hasWifi = false;
+
+      function updateConnectionStatus() {
+        if ("connection" in navigator) {
+          const type =
+            navigator.connection.type || navigator.connection.effectiveType;
+          hasWifi = navigator.onLine && type === "wifi";
+          saveBtn.innerHTML = hasWifi
+            ? '<span class="material-symbols-outlined">save</span>'
+            : '<span class="material-symbols-outlined">cloud_off</span>';
+        } else {
+          // Fallback: assume true if online but no network info
+          hasWifi = navigator.onLine;
+          saveBtn.innerHTML = hasWifi
+            ? '<span class="material-symbols-outlined">save</span>'
+            : '<span class="material-symbols-outlined">cloud_off</span>';
+        }
+        console.log("hasWifi:", hasWifi);
+      }
+
+      // Initial check
+      updateConnectionStatus();
+
+      // Update when connection type changes
+      if ("connection" in navigator) {
+        navigator.connection.addEventListener("change", updateConnectionStatus);
+      }
+
+      // Update when online/offline status changes
+      window.addEventListener("online", updateConnectionStatus);
+      window.addEventListener("offline", updateConnectionStatus);
+
       function getAverageColorFromImage(image) {
         return new Promise((resolve, reject) => {
           if (!image.complete) {
@@ -1631,8 +1663,6 @@
           darkModeButton.classList.remove("selected");
         }
       }
-    </script>
-    <script>
       const saveBtn = document.getElementById("save-btn");
       const saveIcon = document.getElementById("save-icon");
 
