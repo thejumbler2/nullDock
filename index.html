@@ -94,6 +94,7 @@
         -webkit-backdrop-filter: blur(5px) brightness(0.7);
         border-radius: 20%;
         padding: 4px;
+        transition: right 0.3s ease;
       }
 
       #settings-btn {
@@ -593,12 +594,13 @@
 
       .light-mode #search-bar-container,
       .light-mode #settings-container,
+      .light-mode #save-container,
       .light-mode #settings-dropdown button,
       .light-mode .modal-content,
       .light-mode #theme-settings,
       .light-mode #theme-settings-container {
         background-color: rgba(255, 255, 255, 0.8);
-        color: #333;
+        color: black;
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
       }
 
@@ -610,8 +612,14 @@
       .light-mode #search-icon,
       .light-mode #microphone-icon,
       .light-mode #camera-icon,
-      .light-mode #settings-icon {
-        color: #333;
+      .light-mode #settings-icon,
+      .light-mode #save-icon {
+        color: black;
+      }
+
+      .light-mode #settings-dropdown {
+        background-color: rgba(255, 255, 255, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
       }
 
       .light-mode #settings-dropdown button:hover {
@@ -685,6 +693,9 @@
       .light-mode #full-background-image {
         filter: brightness(1.1);
       }
+      .light-mode #save-icon {
+        color: #333;
+      }
 
       /* Dark Mode Styles */
       .dark-mode {
@@ -694,6 +705,7 @@
 
       .dark-mode #search-bar-container,
       .dark-mode #settings-container,
+      .dark-mode #save-container,
       .dark-mode #settings-dropdown button,
       .dark-mode .modal-content,
       .dark-mode #theme-settings {
@@ -826,6 +838,53 @@
       #background-preview-modal .modal-buttons button:hover {
         background-color: rgba(255, 255, 255, 0.2);
       }
+
+      #save-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        height: 48px;
+        width: 48px;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        border-radius: 20%;
+        padding: 4px;
+        transition: right 0.3s ease;
+      }
+
+      #save-btn {
+        background-color: transparent;
+        border: none;
+        cursor: pointer;
+        height: inherit;
+        width: inherit;
+        padding: 0 0 0 0;
+      }
+
+      #save-btn img {
+        width: 48px;
+        height: 48px;
+      }
+
+      #save-icon {
+        color: white;
+        font-size: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      #save-icon.spin-cc {
+        animation: spin-clockwise 0.6s ease;
+      }
+
+      #save-icon.spin-c {
+        animation: spin-counterclockwise 0.6s ease;
+      }
     </style>
     <img
       id="full-background-image"
@@ -843,8 +902,16 @@
       <div id="inputs">
         <span class="material-symbols-outlined" id="search-icon">search</span>
         <input type="text" id="search-bar" placeholder="Search..." />
-        <span class="material-symbols-outlined" id="microphone-icon">mic</span>
-        <span class="material-symbols-outlined" id="camera-icon"
+        <span
+          class="material-symbols-outlined"
+          id="microphone-icon"
+          title="Voice Search"
+          >mic</span
+        >
+        <span
+          class="material-symbols-outlined"
+          id="camera-icon"
+          title="Image Search"
           >camera_alt</span
         >
       </div>
@@ -852,16 +919,21 @@
     </div>
 
     <div id="settings-container" class="no-select">
-      <button id="settings-btn" class="no-select">
+      <button id="settings-btn" class="no-select" title="Settings">
         <span class="material-symbols-outlined" id="settings-icon"
           >settings</span
         >
       </button>
       <div id="settings-dropdown">
-        <button class="no-select setting" id="theme">
+        <button class="no-select setting" id="theme" title="Theme Settings">
           <span class="material-symbols-outlined">palette</span> theme
         </button>
       </div>
+    </div>
+    <div id="save-container" class="no-select">
+      <button id="save-btn" class="no-select" title="Save Newest HTML">
+        <span class="material-symbols-outlined" id="save-icon">save</span>
+      </button>
     </div>
     <div id="image-modal" class="modal hidden">
       <div class="modal-content">
@@ -1010,8 +1082,12 @@
 
       //==================================================
       // #region First Load
-      if (!localStorage.getItem("config_mode")) {
-        localStorage.setItem("config_mode", "dark");
+      if (!localStorage.getItem("theme")) {
+        localStorage.setItem("theme", "dark-mode");
+        document.body.classList.add("dark-mode");
+        document.body.classList.remove("light-mode");
+        updateBodyWidth();
+        checkUIMode();
       }
 
       //==================================================
@@ -1057,6 +1133,7 @@
       const cancelBackgroundButton = document.getElementById(
         "cancel-background-button"
       );
+      const saveContainer = document.getElementById("save-container");
       // #endregion
       //==================================================
 
@@ -1091,8 +1168,8 @@
       checkBackground();
 
       function checkUIMode() {
-        const storedMode = localStorage.getItem("config_mode");
-        if (storedMode === "light") {
+        const storedMode = localStorage.getItem("theme");
+        if (storedMode === "light-mode") {
           document.body.classList.add("light-mode");
           document.body.classList.remove("dark-mode");
           document
@@ -1101,7 +1178,7 @@
           document
             .getElementById("dark-mode-button")
             .classList.remove("selected");
-        } else {
+        } else if (storedMode === "dark-mode") {
           document.body.classList.add("dark-mode");
           document.body.classList.remove("light-mode");
           document.getElementById("dark-mode-button").classList.add("selected");
@@ -1214,6 +1291,11 @@
             `${containerWidth + 20}px`,
             "important"
           );
+          saveContainer.style.setProperty(
+            "right",
+            `${containerWidth + 20}px`,
+            "important"
+          );
         } else {
           themeSettingsContainer.classList.remove("visible");
 
@@ -1232,6 +1314,7 @@
           );
 
           settingsContainer.style.setProperty("right", "20px", "important");
+          saveContainer.style.setProperty("right", "20px", "important");
         }
       }
 
@@ -1507,6 +1590,7 @@
       if (savedTheme) {
         document.body.classList.add(savedTheme);
         updateSelectedMode(savedTheme);
+        checkUIMode(); // Ensure the UI mode is properly updated
       }
 
       // Light Mode Button Click Event
@@ -1547,6 +1631,45 @@
           darkModeButton.classList.remove("selected");
         }
       }
+    </script>
+    <script>
+      const saveBtn = document.getElementById("save-btn");
+      const saveIcon = document.getElementById("save-icon");
+
+      saveBtn.addEventListener("click", async () => {
+        const fileUrl =
+          "https://cdn.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html";
+        const defaultFileName = "index.html";
+
+        // Ask the user for a file name
+        const fileName = prompt(
+          "Enter the file name to save:",
+          defaultFileName
+        );
+        if (!fileName) return;
+
+        try {
+          // Fetch the file content
+          const response = await fetch(fileUrl);
+          if (!response.ok) {
+            throw new Error("Failed to fetch the file.");
+          }
+          const fileContent = await response.text();
+
+          // Create a blob and trigger download
+          const blob = new Blob([fileContent], { type: "text/html" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = fileName;
+          link.click();
+
+          // Clean up
+          URL.revokeObjectURL(link.href);
+        } catch (error) {
+          console.error("Error saving the file:", error);
+          alert("Failed to save the file. Check the console for details.");
+        }
+      });
     </script>
   </body>
 </html>
