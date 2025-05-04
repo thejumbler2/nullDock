@@ -16,6 +16,145 @@
   </head>
   <body id="body">
     <style>
+      .weather-widget {
+        display: flex;
+        justify-content: space-between; /* Align today's and tomorrow's forecast horizontally */
+        padding: 20px;
+        border-radius: 16px;
+        background: rgba(25, 25, 25, 0.7);
+        backdrop-filter: blur(10px) brightness(0.7);
+        -webkit-backdrop-filter: blur(10px) brightness(0.7);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        color: #eee;
+        width: 93.2%;
+        height: 85%;
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      .weather-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .weather-widget .material-symbols-outlined {
+        font-size: 48px;
+        color: #ccc;
+        transition: transform 0.2s ease;
+      }
+
+      .weather-info h2 {
+        margin: 0;
+        font-size: 1.4em;
+        font-weight: 600;
+      }
+
+      .weather-info .temp {
+        font-size: 2em;
+        margin: 4px 0;
+      }
+
+      .weather-info .desc {
+        font-size: 1em;
+        font-style: italic;
+        color: #aaa;
+      }
+
+      .weather-info .detail {
+        font-size: 0.9em;
+        color: #888;
+      }
+
+      /* Both Today and Tomorrow need to be styled similarly */
+      .weather-widget .today,
+      .weather-widget .tomorrow {
+        flex: 1; /* Both take up 50% of the space */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Space out content */
+      }
+
+      /* Make both weather sections look like each other */
+      .weather-widget .today .weather-main,
+      .weather-widget .tomorrow .weather-main {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .weather-widget .today .weather-info,
+      .weather-widget .tomorrow .weather-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .weather-widget .today .weather-info .temp,
+      .weather-widget .tomorrow .weather-info .temp {
+        font-size: 2em;
+        margin: 4px 0;
+      }
+
+      .weather-widget .today .weather-info .desc,
+      .weather-widget .tomorrow .weather-info .desc {
+        font-size: 1em;
+        font-style: italic;
+        color: #aaa;
+      }
+
+      .weather-widget .today .weather-info .detail,
+      .weather-widget .tomorrow .weather-info .detail {
+        font-size: 0.9em;
+        color: #888;
+      }
+
+      /* Styling for tomorrow's section to ensure it mirrors today's */
+      .weather-widget .tomorrow {
+        margin-left: 20px; /* Add space between today's and tomorrow's forecast */
+      }
+
+      /* Dark mode styles */
+      .dark-mode .weather-widget {
+        background: rgba(25, 25, 25, 0.7);
+        backdrop-filter: blur(10px) brightness(0.7);
+        -webkit-backdrop-filter: blur(10px) brightness(0.7);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        color: #eee;
+      }
+
+      .dark-mode .weather-widget .material-symbols-outlined {
+        color: #ccc;
+      }
+
+      .dark-mode .weather-info .desc {
+        color: #aaa;
+      }
+
+      .dark-mode .weather-info .detail {
+        color: #888;
+      }
+
+      /* Light mode for weather widget */
+      .light-mode .weather-widget {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px) brightness(1.1);
+        -webkit-backdrop-filter: blur(10px) brightness(1.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: #222;
+      }
+
+      .light-mode .weather-widget .material-symbols-outlined {
+        color: #474747 !important;
+      }
+
+      .light-mode .weather-info .desc {
+        color: #474747 !important;
+      }
+
+      .light-mode .weather-info .detail {
+        color: #474747 !important;
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -174,6 +313,8 @@
         padding: 10px;
         animation: fade-in 0.3s ease-in-out;
         width: 200px;
+        z-index: 9999;
+        gap: 4px;
       }
 
       #settings-dropdown button {
@@ -885,6 +1026,46 @@
       #save-icon.spin-c {
         animation: spin-counterclockwise 0.6s ease;
       }
+
+      #widgets-container {
+        margin-top: 350px;
+        align-items: center;
+        width: 580px;
+        height: 260px;
+        border-radius: 20px;
+        padding: 5px 10px;
+        border: none;
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        font-size: 16px;
+        position: fixed;
+        transition: opacity 0.4s ease, height 1s ease;
+        opacity: 1;
+      }
+
+      #widgets-container.hidden {
+        opacity: 0;
+        pointer-events: none; /* Prevent interaction when hidden */
+        height: 0; /* Collapse height */
+      }
+
+      .dark-mode #widgets-container {
+        background-color: rgba(0, 0, 0, 0.3);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px) brightness(0.7);
+        -webkit-backdrop-filter: blur(5px) brightness(0.7);
+        color: #eee;
+      }
+
+      .light-mode #widgets-container {
+        background-color: rgba(255, 255, 255, 0.6);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px) brightness(1.2);
+        -webkit-backdrop-filter: blur(5px) brightness(1.2);
+        color: #222;
+      }
     </style>
     <img
       id="full-background-image"
@@ -918,6 +1099,8 @@
       <div id="suggestions"></div>
     </div>
 
+    <div id="widgets-container"></div>
+
     <div id="settings-container" class="no-select">
       <button id="settings-btn" class="no-select" title="Settings">
         <span class="material-symbols-outlined" id="settings-icon"
@@ -926,9 +1109,25 @@
       </button>
       <div id="settings-dropdown">
         <button class="no-select setting" id="theme" title="Theme Settings">
-          <span class="material-symbols-outlined">palette</span> theme
+          <span class="material-symbols-outlined">palette</span> Theme settings
+        </button>
+        <button
+          class="no-select setting"
+          id="export-settings"
+          title="Theme Settings"
+        >
+          <span class="material-symbols-outlined">download</span> Export
+          settings
+        </button>
+        <button
+          class="no-select setting"
+          id="import-settings"
+          title="Theme Settings"
+        >
+          <span class="material-symbols-outlined">upload</span> Import settings
         </button>
       </div>
+      <!-- Properly closed here -->
     </div>
     <div id="save-container" class="no-select">
       <button id="save-btn" class="no-select" title="Save Newest HTML">
@@ -1175,6 +1374,10 @@
         "cancel-background-button"
       );
       const saveContainer = document.getElementById("save-container");
+
+      const exportBtn = document.getElementById("export-settings");
+      const importBtn = document.getElementById("import-settings");
+      const widgetsContainer = document.getElementById("widgets-container");
       // #endregion
       //==================================================
 
@@ -1394,6 +1597,7 @@
           if (searchBarState === "open") {
             searchBar.parentElement.parentElement.classList.remove("open");
             searchBar.parentElement.parentElement.classList.add("close");
+            widgetsContainer.classList.remove("hidden");
             searchBarState = "closed";
           }
           return;
@@ -1402,6 +1606,7 @@
         if (searchBarState === "closed") {
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
+          widgetsContainer.classList.add("hidden");
           searchBarState = "open";
         }
 
@@ -1415,6 +1620,7 @@
           fetchGoogleSuggestions(searchBar.value);
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
+          widgetsContainer.classList.add("hidden");
           searchBarState = "open";
         }
       });
@@ -1427,6 +1633,7 @@
         ) {
           searchBar.parentElement.parentElement.classList.remove("open");
           searchBar.parentElement.parentElement.classList.add("close");
+          widgetsContainer.classList.remove("hidden");
           searchBarState = "closed";
           suggestionsBox.innerHTML = "";
         }
@@ -1712,6 +1919,198 @@
 
       // Initial check
       updateConnectionStatus();
+
+      // ==================================================
+      // #region Export/Import Settings
+      exportBtn.addEventListener("click", () => {
+        const theme = localStorage.getItem("theme");
+        const backgroundImage = localStorage.getItem("config_backgroundImage");
+        const settings = {
+          theme,
+          backgroundImage,
+        };
+        const blob = new Blob([JSON.stringify(settings)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "settings.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+      importBtn.addEventListener("click", () => {
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = ".json";
+        fileInput.addEventListener("change", (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                const settings = JSON.parse(e.target.result);
+                localStorage.setItem("theme", settings.theme);
+                localStorage.setItem(
+                  "config_backgroundImage",
+                  settings.backgroundImage
+                );
+                location.reload();
+              } catch (error) {
+                console.error("Error parsing JSON:", error);
+              }
+            };
+            reader.readAsText(file);
+          }
+        });
+        fileInput.click();
+      });
+      // #endregion
+      // ==================================================
+
+      const weatherDescriptions = {
+        0: "Clear sky",
+        1: "Mainly clear",
+        2: "Partly cloudy",
+        3: "Overcast",
+        45: "Fog",
+        48: "Depositing rime fog",
+        51: "Light drizzle",
+        53: "Moderate drizzle",
+        55: "Dense drizzle",
+        56: "Light freezing drizzle",
+        57: "Dense freezing drizzle",
+        61: "Slight rain",
+        63: "Moderate rain",
+        65: "Heavy rain",
+        66: "Light freezing rain",
+        67: "Heavy freezing rain",
+        71: "Slight snowfall",
+        73: "Moderate snowfall",
+        75: "Heavy snowfall",
+        77: "Snow grains",
+        80: "Slight rain showers",
+        81: "Moderate rain showers",
+        82: "Violent rain showers",
+        85: "Slight snow showers",
+        86: "Heavy snow showers",
+        95: "Thunderstorm",
+        96: "Thunderstorm + slight hail",
+        99: "Thunderstorm + heavy hail",
+      };
+
+      function degToCompass(num) {
+        const val = Math.floor(num / 22.5 + 0.5);
+        const arr = [
+          "N",
+          "NNE",
+          "NE",
+          "ENE",
+          "E",
+          "ESE",
+          "SE",
+          "SSE",
+          "S",
+          "SSW",
+          "SW",
+          "WSW",
+          "W",
+          "WNW",
+          "NW",
+          "NNW",
+        ];
+        return arr[val % 16];
+      }
+
+      async function loadWeather() {
+        try {
+          const ipRes = await fetch("https://ipapi.co/json");
+          const ipData = await ipRes.json();
+          const lat = ipData.latitude;
+          const lon = ipData.longitude;
+          const city = ipData.city;
+
+          const weatherRes = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weathercode&timezone=America/New_York`
+          );
+          const weatherData = await weatherRes.json();
+          const weather = weatherData.current_weather;
+
+          const tempF = Math.round((weather.temperature * 9) / 5 + 32);
+          const windDir = degToCompass(weather.winddirection);
+          const windSpeed = Math.round(weather.windspeed / 1.609);
+          const code = weather.weathercode;
+          const condition = weatherDescriptions[code] || "Unknown";
+
+          const time = new Date(weather.time).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          // Tomorrow's forecast
+          const tomorrow = weatherData.daily;
+          const maxTempF = Math.round(
+            (tomorrow.temperature_2m_max[1] * 9) / 5 + 32
+          );
+          const minTempF = Math.round(
+            (tomorrow.temperature_2m_min[1] * 9) / 5 + 32
+          );
+          const apparentMaxTempF = Math.round(
+            (tomorrow.apparent_temperature_max[1] * 9) / 5 + 32
+          );
+          const apparentMinTempF = Math.round(
+            (tomorrow.apparent_temperature_min[1] * 9) / 5 + 32
+          );
+          const precipitationSum = tomorrow.precipitation_sum[1];
+          const forecastCondition =
+            weatherDescriptions[tomorrow.weathercode[1]] || "Unknown";
+
+          widgetsContainer.innerHTML = `
+      <div class="weather-widget">
+        <div class="today">
+          <div class="weather-main">
+            <span class="material-symbols-outlined" title="${condition}">thermostat</span>
+            <div class="weather-info">
+              <h2>${city}</h2>
+              <p class="temp">${tempF}°F</p>
+              <p class="desc">${condition}</p>
+              <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
+              <p class="detail">🕒 Updated: ${time}</p>
+            </div>
+          </div>
+        </div>
+        <div class="tomorrow">
+          <div class="weather-main">
+            <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
+            <div class="weather-info">
+              <h2>Tomorrow</h2>
+              <p class="temp">${maxTempF}° / ${minTempF}°F</p>
+              <p class="desc">${forecastCondition}</p>
+              <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
+              <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+        } catch (err) {
+          console.error("Weather load failed:", err);
+          widgetsContainer.innerHTML = `
+      <div class="weather-widget">
+        <p>Unable to load weather. Try again later.</p>
+      </div>
+    `;
+        }
+      }
+
+      function degToCompass(deg) {
+        const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+        return dirs[Math.round(deg / 45) % 8];
+      }
+      loadWeather();
+      setInterval(() => {
+        loadWeather();
+      }, 60000);
     </script>
   </body>
 </html>
