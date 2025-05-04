@@ -1011,21 +1011,30 @@
           const type =
             navigator.connection.type || navigator.connection.effectiveType;
           hasWifi = navigator.onLine && type === "wifi";
-          saveBtn.innerHTML = hasWifi
-            ? '<span class="material-symbols-outlined">save</span>'
-            : '<span class="material-symbols-outlined">cloud_off</span>';
+          saveBtn.querySelector("span").textContent = hasWifi
+            ? "save"
+            : "cloud_off";
+          saveBtn.setAttribute(
+            "title",
+            hasWifi
+              ? "Save latest update to local storage"
+              : "No internet connection, cannot update now"
+          );
         } else {
           // Fallback: assume true if online but no network info
           hasWifi = navigator.onLine;
-          saveBtn.innerHTML = hasWifi
-            ? '<span class="material-symbols-outlined">save</span>'
-            : '<span class="material-symbols-outlined">cloud_off</span>';
+          saveBtn.querySelector("span").textContent = hasWifi
+            ? "save"
+            : "cloud_off";
         }
+        saveBtn.setAttribute(
+          "title",
+          hasWifi
+            ? "Save latest update to local storage"
+            : "No internet connection, cannot update now"
+        );
         console.log("hasWifi:", hasWifi);
       }
-
-      // Initial check
-      updateConnectionStatus();
 
       // Update when connection type changes
       if ("connection" in navigator) {
@@ -1700,6 +1709,9 @@
           alert("Failed to save the file. Check the console for details.");
         }
       });
+
+      // Initial check
+      updateConnectionStatus();
     </script>
   </body>
 </html>
