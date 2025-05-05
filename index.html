@@ -1261,1161 +1261,1216 @@
     <input type="file" id="fileInput" style="display: none" />
 
     <script>
-      let hasWifi = false;
+      if (location.hash === "#new") {
+        // Remove the hash to prevent looping if reloaded
+        const cleanUrl = location.href.replace(/#new$/, "");
 
-      function updateConnectionStatus() {
-        if ("connection" in navigator) {
-          const type =
-            navigator.connection.type || navigator.connection.effectiveType;
-          hasWifi = navigator.onLine && type === "wifi";
-          saveBtn.querySelector("span").textContent = hasWifi
-            ? "save"
-            : "cloud_off";
+        // Open the same page in a new tab, without the #new
+        window.open(cleanUrl, "_blank");
+
+        // Go back to previous page in history
+        history.back();
+      } else {
+        let hasWifi = false;
+
+        function updateConnectionStatus() {
+          if ("connection" in navigator) {
+            const type =
+              navigator.connection.type || navigator.connection.effectiveType;
+            hasWifi = navigator.onLine && type === "wifi";
+            saveBtn.querySelector("span").textContent = hasWifi
+              ? "save"
+              : "cloud_off";
+            saveBtn.setAttribute(
+              "title",
+              hasWifi
+                ? "Save latest update to local storage"
+                : "No internet connection, cannot update now"
+            );
+          } else {
+            // Fallback: assume true if online but no network info
+            hasWifi = navigator.onLine;
+            saveBtn.querySelector("span").textContent = hasWifi
+              ? "save"
+              : "cloud_off";
+          }
           saveBtn.setAttribute(
             "title",
             hasWifi
               ? "Save latest update to local storage"
               : "No internet connection, cannot update now"
           );
-        } else {
-          // Fallback: assume true if online but no network info
-          hasWifi = navigator.onLine;
-          saveBtn.querySelector("span").textContent = hasWifi
-            ? "save"
-            : "cloud_off";
+          console.log("hasWifi:", hasWifi);
         }
-        saveBtn.setAttribute(
-          "title",
-          hasWifi
-            ? "Save latest update to local storage"
-            : "No internet connection, cannot update now"
+
+        // Update when connection type changes
+        if ("connection" in navigator) {
+          navigator.connection.addEventListener(
+            "change",
+            updateConnectionStatus
+          );
+        }
+
+        // Update when online/offline status changes
+        window.addEventListener("online", updateConnectionStatus);
+        window.addEventListener("offline", updateConnectionStatus);
+
+        function getAverageColorFromImage(image) {
+          return new Promise((resolve, reject) => {
+            if (!image.complete) {
+              image.onload = () => resolve(getAverageColorFromImage(image));
+              image.onerror = reject;
+              return;
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(image, 0, 0);
+
+            try {
+              const { data } = ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+              let r = 0,
+                g = 0,
+                b = 0,
+                count = 0;
+
+              for (let i = 0; i < data.length; i += 4) {
+                const alpha = data[i + 3];
+                if (alpha === 0) continue;
+
+                r += data[i];
+                g += data[i + 1];
+                b += data[i + 2];
+                count++;
+              }
+
+              if (count === 0) return resolve("#000000");
+
+              r = Math.round(r / count);
+              g = Math.round(g / count);
+              b = Math.round(b / count);
+
+              const toHex = (c) => c.toString(16).padStart(2, "0");
+
+              resolve(`#${toHex(r)}${toHex(g)}${toHex(b)}`);
+            } catch (err) {
+              reject(err);
+            }
+          });
+        }
+
+        function brightnessFromHex(hex) {
+          let r = 0,
+            g = 0,
+            b = 0;
+          if (hex.length === 4) {
+            r = parseInt(hex[1] + hex[1], 16);
+            g = parseInt(hex[2] + hex[2], 16);
+            b = parseInt(hex[3] + hex[3], 16);
+          } else if (hex.length === 7) {
+            r = parseInt(hex.slice(1, 3), 16);
+            g = parseInt(hex.slice(3, 5), 16);
+            b = parseInt(hex.slice(5, 7), 16);
+          }
+
+          const toLinear = (c) => {
+            c /= 255;
+            return c <= 0.03928
+              ? c / 12.92
+              : Math.pow((c + 0.055) / 1.055, 2.4);
+          };
+
+          const lum =
+            0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+          return Math.round(lum * 10);
+        }
+
+        //==================================================
+        // #region First Load
+        if (!localStorage.getItem("theme")) {
+          localStorage.setItem("theme", "dark-mode");
+          document.body.classList.add("dark-mode");
+          document.body.classList.remove("light-mode");
+          updateBodyWidth();
+          checkUIMode();
+        }
+
+        //==================================================
+        // #region DOM Elements
+        const body = document.getElementById("body");
+        const fullBackgroundImage = document.getElementById(
+          "full-background-image"
         );
-        console.log("hasWifi:", hasWifi);
-      }
+        const fileInput = document.getElementById("fileInput");
+        const settingsBtn = document.getElementById("settings-btn");
+        const settingsDropdown = document.getElementById("settings-dropdown");
+        const themeButton = document.getElementById("theme");
+        const searchBar = document.getElementById("search-bar");
+        const suggestionsBox = document.getElementById("suggestions");
+        const backgroundPreview = document.getElementById("background-preview");
+        const resetBackgroundButton = document.getElementById(
+          "reset-background-button"
+        );
+        const backgroundButton = document.getElementById("background-button");
+        const settingsContainer = document.getElementById("settings-container");
+        const backgroundPlaceholder = document.getElementById(
+          "background-placeholder"
+        );
+        const themeSettingsContainer = document.getElementById(
+          "theme-settings-container"
+        );
+        const closeThemeSettingsButton = document.getElementById(
+          "close-theme-settings"
+        );
+        const modal = document.getElementById("image-modal");
+        const imageInput = document.getElementById("image-url-input");
+        const imageSubmit = document.getElementById("image-url-submit");
+        const settingsIcon = document.getElementById("settings-icon");
+        const backgroundPreviewModal = document.getElementById(
+          "background-preview-modal"
+        );
+        const backgroundPreviewModalImage = document.getElementById(
+          "background-preview-modal-image"
+        );
+        const confirmBackgroundButton = document.getElementById(
+          "confirm-background-button"
+        );
+        const cancelBackgroundButton = document.getElementById(
+          "cancel-background-button"
+        );
+        const saveContainer = document.getElementById("save-container");
 
-      // Update when connection type changes
-      if ("connection" in navigator) {
-        navigator.connection.addEventListener("change", updateConnectionStatus);
-      }
+        const exportBtn = document.getElementById("export-settings");
+        const importBtn = document.getElementById("import-settings");
+        const widgetContainers = document.querySelectorAll("widgets-container");
+        const rightWidgetContainer = document.getElementById(
+          "widgets-container-right"
+        );
+        const leftWidgetContainer = document.getElementById(
+          "widgets-container-left"
+        );
+        const bottomWidgetContainer = document.getElementById(
+          "widgets-container-bottom"
+        );
+        // #endregion
+        //==================================================
 
-      // Update when online/offline status changes
-      window.addEventListener("online", updateConnectionStatus);
-      window.addEventListener("offline", updateConnectionStatus);
+        //==================================================
+        // #region Variables
+        let fileMode;
+        let searchBarState = "closed";
+        let themeSettingsVisible = false;
+        let isClockwise = true;
+        let typingTimer;
+        let hoveredElement = null;
+        let weatherWidgetLocation =
+          localStorage.getItem("weatherWidgetLocation") || "bottom";
+        let weatherWidget;
+        const debounceDelay = 500;
+        // #endregion
+        //==================================================
 
-      function getAverageColorFromImage(image) {
-        return new Promise((resolve, reject) => {
-          if (!image.complete) {
-            image.onload = () => resolve(getAverageColorFromImage(image));
-            image.onerror = reject;
+        //==================================================
+        // #region Background Management
+        function checkBackground() {
+          const storedBackground = localStorage.getItem(
+            "config_backgroundImage"
+          );
+          if (!storedBackground) {
+            backgroundPreview.style.display = "none";
+            backgroundPlaceholder.style.display = "block";
+            fullBackgroundImage.style.opacity = "0";
+            fullBackgroundImage.src = "";
+          } else {
+            backgroundPreview.src = storedBackground;
+            fullBackgroundImage.src = storedBackground;
+            backgroundPreview.style.display = "block";
+            backgroundPlaceholder.style.display = "none";
+            fullBackgroundImage.style.opacity = "1";
+          }
+        }
+        checkBackground();
+
+        function checkUIMode() {
+          const storedMode = localStorage.getItem("theme");
+          if (storedMode === "light-mode") {
+            document.body.classList.add("light-mode");
+            document.body.classList.remove("dark-mode");
+            document
+              .getElementById("light-mode-button")
+              .classList.add("selected");
+            document
+              .getElementById("dark-mode-button")
+              .classList.remove("selected");
+          } else if (storedMode === "dark-mode") {
+            document.body.classList.add("dark-mode");
+            document.body.classList.remove("light-mode");
+            document
+              .getElementById("dark-mode-button")
+              .classList.add("selected");
+            document
+              .getElementById("light-mode-button")
+              .classList.remove("selected");
+          }
+        }
+        checkUIMode();
+        // #endregion
+        //==================================================
+        backgroundButton.addEventListener("click", () => {
+          fileMode = "background";
+          fileInput.accept = "image/*";
+          fileInput.click();
+        });
+
+        resetBackgroundButton.addEventListener("click", () => {
+          localStorage.removeItem("config_backgroundImage");
+          fullBackgroundImage.src = "";
+          fullBackgroundImage.style.opacity = "0";
+          backgroundPreview.style.display = "none";
+          backgroundPlaceholder.style.display = "block";
+        });
+
+        fileInput.addEventListener("change", () => {
+          const file = fileInput.files[0];
+          if (file) {
+            if (fileMode === "background") {
+              const reader = new FileReader();
+              reader.onload = function (event) {
+                const dataUrl = event.target.result;
+                backgroundPreviewModalImage.src = dataUrl;
+                backgroundPreviewModal.classList.remove("hidden");
+              };
+              reader.readAsDataURL(file);
+            }
+          }
+        });
+
+        confirmBackgroundButton.addEventListener("click", () => {
+          const dataUrl = backgroundPreviewModalImage.src;
+          localStorage.setItem("config_backgroundImage", dataUrl);
+          fullBackgroundImage.src = dataUrl;
+          backgroundPreview.src = dataUrl;
+          fullBackgroundImage.style.opacity = "1";
+          backgroundPreview.style.display = "block";
+          backgroundPlaceholder.style.display = "none";
+          backgroundPreviewModal.classList.add("hidden");
+          updateBodyWidth();
+          checkBackground();
+          checkUIMode();
+        });
+
+        cancelBackgroundButton.addEventListener("click", () => {
+          backgroundPreviewModal.classList.add("hidden");
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+          const backgroundImage = localStorage.getItem(
+            "config_backgroundImage"
+          );
+          if (backgroundImage) {
+            fullBackgroundImage.src = backgroundImage;
+          }
+        });
+        // #endregion
+        //==================================================
+
+        //==================================================
+        // #region Theme Settings
+        themeButton.addEventListener("click", () => {
+          themeSettingsVisible = !themeSettingsVisible;
+          updateBodyWidth();
+          settingsBtn.click();
+        });
+
+        closeThemeSettingsButton.addEventListener("click", () => {
+          themeSettingsVisible = false;
+          updateBodyWidth();
+        });
+
+        function updateBodyWidth() {
+          if (themeSettingsVisible) {
+            themeSettingsContainer.classList.add("visible");
+
+            const containerWidth = parseFloat(
+              getComputedStyle(themeSettingsContainer).width
+            );
+
+            document.body.style.width = `${
+              window.innerWidth - containerWidth
+            }px`;
+            fullBackgroundImage.style.width = `${
+              window.innerWidth - containerWidth
+            }px`;
+            backgroundPreviewModal.style.width = `${
+              window.innerWidth - containerWidth
+            }px`;
+
+            backgroundPreview.style.setProperty(
+              "width",
+              `${document.body.clientWidth / 4}px`,
+              "important"
+            );
+            backgroundPreview.style.setProperty(
+              "height",
+              `${document.body.clientHeight / 4}px`,
+              "important"
+            );
+
+            settingsContainer.style.setProperty(
+              "right",
+              `${containerWidth + 20}px`,
+              "important"
+            );
+            saveContainer.style.setProperty(
+              "right",
+              `${containerWidth + 20}px`,
+              "important"
+            );
+          } else {
+            themeSettingsContainer.classList.remove("visible");
+
+            document.body.style.width = `${window.innerWidth}px`;
+            fullBackgroundImage.style.width = `${window.innerWidth}px`;
+
+            backgroundPreview.style.setProperty(
+              "width",
+              `${document.body.clientWidth / 4}px`,
+              "important"
+            );
+            backgroundPreview.style.setProperty(
+              "height",
+              `${document.body.clientHeight / 4}px`,
+              "important"
+            );
+
+            settingsContainer.style.setProperty("right", "20px", "important");
+            saveContainer.style.setProperty("right", "20px", "important");
+          }
+        }
+
+        window.addEventListener("resize", updateBodyWidth);
+        updateBodyWidth();
+        // #endregion
+        //==================================================
+
+        //==================================================
+        // #region Settings Dropdown
+        settingsBtn.addEventListener("click", () => {
+          const isVisible = settingsDropdown.style.display === "flex";
+          settingsDropdown.style.animation = isVisible
+            ? "fade-out 0.3s ease-out"
+            : "fade-in 0.3s ease-out";
+          setTimeout(() => {
+            settingsDropdown.style.display = isVisible ? "none" : "flex";
+          }, 300);
+
+          settingsIcon.classList.toggle("spin-c", !isClockwise);
+          settingsIcon.classList.toggle("spin-cc", isClockwise);
+          isClockwise = !isClockwise;
+        });
+        // #endregion
+        //==================================================
+
+        //==================================================
+        // #region Search Bar and Suggestions
+        searchBar.addEventListener("input", () => {
+          const inputValue = searchBar.value.trim();
+
+          clearTimeout(typingTimer);
+
+          if (!inputValue) {
+            suggestionsBox.innerHTML = "";
+            if (searchBarState === "open") {
+              searchBar.parentElement.parentElement.classList.remove("open");
+              searchBar.parentElement.parentElement.classList.add("close");
+              bottomWidgetContainer.classList.remove("hidden");
+              searchBarState = "closed";
+            }
             return;
           }
 
-          const canvas = document.createElement("canvas");
-          canvas.width = image.naturalWidth;
-          canvas.height = image.naturalHeight;
+          if (searchBarState === "closed") {
+            searchBar.parentElement.parentElement.classList.remove("close");
+            searchBar.parentElement.parentElement.classList.add("open");
+            bottomWidgetContainer.classList.add("hidden");
+            searchBarState = "open";
+          }
 
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          ctx.drawImage(image, 0, 0);
+          typingTimer = setTimeout(() => {
+            fetchGoogleSuggestions(inputValue);
+          }, debounceDelay);
+        });
 
-          try {
-            const { data } = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            let r = 0,
-              g = 0,
-              b = 0,
-              count = 0;
-
-            for (let i = 0; i < data.length; i += 4) {
-              const alpha = data[i + 3];
-              if (alpha === 0) continue;
-
-              r += data[i];
-              g += data[i + 1];
-              b += data[i + 2];
-              count++;
-            }
-
-            if (count === 0) return resolve("#000000");
-
-            r = Math.round(r / count);
-            g = Math.round(g / count);
-            b = Math.round(b / count);
-
-            const toHex = (c) => c.toString(16).padStart(2, "0");
-
-            resolve(`#${toHex(r)}${toHex(g)}${toHex(b)}`);
-          } catch (err) {
-            reject(err);
+        searchBar.addEventListener("focus", () => {
+          if (searchBarState === "closed" && searchBar.value !== "") {
+            fetchGoogleSuggestions(searchBar.value);
+            searchBar.parentElement.parentElement.classList.remove("close");
+            searchBar.parentElement.parentElement.classList.add("open");
+            bottomWidgetContainer.classList.add("hidden");
+            searchBarState = "open";
           }
         });
-      }
 
-      function brightnessFromHex(hex) {
-        let r = 0,
-          g = 0,
-          b = 0;
-        if (hex.length === 4) {
-          r = parseInt(hex[1] + hex[1], 16);
-          g = parseInt(hex[2] + hex[2], 16);
-          b = parseInt(hex[3] + hex[3], 16);
-        } else if (hex.length === 7) {
-          r = parseInt(hex.slice(1, 3), 16);
-          g = parseInt(hex.slice(3, 5), 16);
-          b = parseInt(hex.slice(5, 7), 16);
-        }
-
-        const toLinear = (c) => {
-          c /= 255;
-          return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-        };
-
-        const lum =
-          0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-        return Math.round(lum * 10);
-      }
-
-      //==================================================
-      // #region First Load
-      if (!localStorage.getItem("theme")) {
-        localStorage.setItem("theme", "dark-mode");
-        document.body.classList.add("dark-mode");
-        document.body.classList.remove("light-mode");
-        updateBodyWidth();
-        checkUIMode();
-      }
-
-      //==================================================
-      // #region DOM Elements
-      const body = document.getElementById("body");
-      const fullBackgroundImage = document.getElementById(
-        "full-background-image"
-      );
-      const fileInput = document.getElementById("fileInput");
-      const settingsBtn = document.getElementById("settings-btn");
-      const settingsDropdown = document.getElementById("settings-dropdown");
-      const themeButton = document.getElementById("theme");
-      const searchBar = document.getElementById("search-bar");
-      const suggestionsBox = document.getElementById("suggestions");
-      const backgroundPreview = document.getElementById("background-preview");
-      const resetBackgroundButton = document.getElementById(
-        "reset-background-button"
-      );
-      const backgroundButton = document.getElementById("background-button");
-      const settingsContainer = document.getElementById("settings-container");
-      const backgroundPlaceholder = document.getElementById(
-        "background-placeholder"
-      );
-      const themeSettingsContainer = document.getElementById(
-        "theme-settings-container"
-      );
-      const closeThemeSettingsButton = document.getElementById(
-        "close-theme-settings"
-      );
-      const modal = document.getElementById("image-modal");
-      const imageInput = document.getElementById("image-url-input");
-      const imageSubmit = document.getElementById("image-url-submit");
-      const settingsIcon = document.getElementById("settings-icon");
-      const backgroundPreviewModal = document.getElementById(
-        "background-preview-modal"
-      );
-      const backgroundPreviewModalImage = document.getElementById(
-        "background-preview-modal-image"
-      );
-      const confirmBackgroundButton = document.getElementById(
-        "confirm-background-button"
-      );
-      const cancelBackgroundButton = document.getElementById(
-        "cancel-background-button"
-      );
-      const saveContainer = document.getElementById("save-container");
-
-      const exportBtn = document.getElementById("export-settings");
-      const importBtn = document.getElementById("import-settings");
-      const widgetContainers = document.querySelectorAll("widgets-container");
-      const rightWidgetContainer = document.getElementById(
-        "widgets-container-right"
-      );
-      const leftWidgetContainer = document.getElementById(
-        "widgets-container-left"
-      );
-      const bottomWidgetContainer = document.getElementById(
-        "widgets-container-bottom"
-      );
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Variables
-      let fileMode;
-      let searchBarState = "closed";
-      let themeSettingsVisible = false;
-      let isClockwise = true;
-      let typingTimer;
-      let hoveredElement = null;
-      let weatherWidgetLocation = localStorage.getItem(
-        "weatherWidgetLocation"
-      ) || "bottom";
-      let weatherWidget;
-      const debounceDelay = 500;
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Background Management
-      function checkBackground() {
-        const storedBackground = localStorage.getItem("config_backgroundImage");
-        if (!storedBackground) {
-          backgroundPreview.style.display = "none";
-          backgroundPlaceholder.style.display = "block";
-          fullBackgroundImage.style.opacity = "0";
-          fullBackgroundImage.src = "";
-        } else {
-          backgroundPreview.src = storedBackground;
-          fullBackgroundImage.src = storedBackground;
-          backgroundPreview.style.display = "block";
-          backgroundPlaceholder.style.display = "none";
-          fullBackgroundImage.style.opacity = "1";
-        }
-      }
-      checkBackground();
-
-      function checkUIMode() {
-        const storedMode = localStorage.getItem("theme");
-        if (storedMode === "light-mode") {
-          document.body.classList.add("light-mode");
-          document.body.classList.remove("dark-mode");
-          document
-            .getElementById("light-mode-button")
-            .classList.add("selected");
-          document
-            .getElementById("dark-mode-button")
-            .classList.remove("selected");
-        } else if (storedMode === "dark-mode") {
-          document.body.classList.add("dark-mode");
-          document.body.classList.remove("light-mode");
-          document.getElementById("dark-mode-button").classList.add("selected");
-          document
-            .getElementById("light-mode-button")
-            .classList.remove("selected");
-        }
-      }
-      checkUIMode();
-      // #endregion
-      //==================================================
-      backgroundButton.addEventListener("click", () => {
-        fileMode = "background";
-        fileInput.accept = "image/*";
-        fileInput.click();
-      });
-
-      resetBackgroundButton.addEventListener("click", () => {
-        localStorage.removeItem("config_backgroundImage");
-        fullBackgroundImage.src = "";
-        fullBackgroundImage.style.opacity = "0";
-        backgroundPreview.style.display = "none";
-        backgroundPlaceholder.style.display = "block";
-      });
-
-      fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (file) {
-          if (fileMode === "background") {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-              const dataUrl = event.target.result;
-              backgroundPreviewModalImage.src = dataUrl;
-              backgroundPreviewModal.classList.remove("hidden");
-            };
-            reader.readAsDataURL(file);
-          }
-        }
-      });
-
-      confirmBackgroundButton.addEventListener("click", () => {
-        const dataUrl = backgroundPreviewModalImage.src;
-        localStorage.setItem("config_backgroundImage", dataUrl);
-        fullBackgroundImage.src = dataUrl;
-        backgroundPreview.src = dataUrl;
-        fullBackgroundImage.style.opacity = "1";
-        backgroundPreview.style.display = "block";
-        backgroundPlaceholder.style.display = "none";
-        backgroundPreviewModal.classList.add("hidden");
-        updateBodyWidth();
-        checkBackground();
-        checkUIMode();
-      });
-
-      cancelBackgroundButton.addEventListener("click", () => {
-        backgroundPreviewModal.classList.add("hidden");
-      });
-
-      document.addEventListener("DOMContentLoaded", () => {
-        const backgroundImage = localStorage.getItem("config_backgroundImage");
-        if (backgroundImage) {
-          fullBackgroundImage.src = backgroundImage;
-        }
-      });
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Theme Settings
-      themeButton.addEventListener("click", () => {
-        themeSettingsVisible = !themeSettingsVisible;
-        updateBodyWidth();
-        settingsBtn.click();
-      });
-
-      closeThemeSettingsButton.addEventListener("click", () => {
-        themeSettingsVisible = false;
-        updateBodyWidth();
-      });
-
-      function updateBodyWidth() {
-        if (themeSettingsVisible) {
-          themeSettingsContainer.classList.add("visible");
-
-          const containerWidth = parseFloat(
-            getComputedStyle(themeSettingsContainer).width
-          );
-
-          document.body.style.width = `${window.innerWidth - containerWidth}px`;
-          fullBackgroundImage.style.width = `${
-            window.innerWidth - containerWidth
-          }px`;
-          backgroundPreviewModal.style.width = `${
-            window.innerWidth - containerWidth
-          }px`;
-
-          backgroundPreview.style.setProperty(
-            "width",
-            `${document.body.clientWidth / 4}px`,
-            "important"
-          );
-          backgroundPreview.style.setProperty(
-            "height",
-            `${document.body.clientHeight / 4}px`,
-            "important"
-          );
-
-          settingsContainer.style.setProperty(
-            "right",
-            `${containerWidth + 20}px`,
-            "important"
-          );
-          saveContainer.style.setProperty(
-            "right",
-            `${containerWidth + 20}px`,
-            "important"
-          );
-        } else {
-          themeSettingsContainer.classList.remove("visible");
-
-          document.body.style.width = `${window.innerWidth}px`;
-          fullBackgroundImage.style.width = `${window.innerWidth}px`;
-
-          backgroundPreview.style.setProperty(
-            "width",
-            `${document.body.clientWidth / 4}px`,
-            "important"
-          );
-          backgroundPreview.style.setProperty(
-            "height",
-            `${document.body.clientHeight / 4}px`,
-            "important"
-          );
-
-          settingsContainer.style.setProperty("right", "20px", "important");
-          saveContainer.style.setProperty("right", "20px", "important");
-        }
-      }
-
-      window.addEventListener("resize", updateBodyWidth);
-      updateBodyWidth();
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Settings Dropdown
-      settingsBtn.addEventListener("click", () => {
-        const isVisible = settingsDropdown.style.display === "flex";
-        settingsDropdown.style.animation = isVisible
-          ? "fade-out 0.3s ease-out"
-          : "fade-in 0.3s ease-out";
-        setTimeout(() => {
-          settingsDropdown.style.display = isVisible ? "none" : "flex";
-        }, 300);
-
-        settingsIcon.classList.toggle("spin-c", !isClockwise);
-        settingsIcon.classList.toggle("spin-cc", isClockwise);
-        isClockwise = !isClockwise;
-      });
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Search Bar and Suggestions
-      searchBar.addEventListener("input", () => {
-        const inputValue = searchBar.value.trim();
-
-        clearTimeout(typingTimer);
-
-        if (!inputValue) {
-          suggestionsBox.innerHTML = "";
-          if (searchBarState === "open") {
+        document.addEventListener("click", (e) => {
+          if (
+            searchBarState === "open" &&
+            !searchBar.contains(e.target) &&
+            !searchBar.parentElement.contains(e.target)
+          ) {
             searchBar.parentElement.parentElement.classList.remove("open");
             searchBar.parentElement.parentElement.classList.add("close");
             bottomWidgetContainer.classList.remove("hidden");
             searchBarState = "closed";
+            suggestionsBox.innerHTML = "";
           }
-          return;
-        }
-
-        if (searchBarState === "closed") {
-          searchBar.parentElement.parentElement.classList.remove("close");
-          searchBar.parentElement.parentElement.classList.add("open");
-          bottomWidgetContainer.classList.add("hidden");
-          searchBarState = "open";
-        }
-
-        typingTimer = setTimeout(() => {
-          fetchGoogleSuggestions(inputValue);
-        }, debounceDelay);
-      });
-
-      searchBar.addEventListener("focus", () => {
-        if (searchBarState === "closed" && searchBar.value !== "") {
-          fetchGoogleSuggestions(searchBar.value);
-          searchBar.parentElement.parentElement.classList.remove("close");
-          searchBar.parentElement.parentElement.classList.add("open");
-          bottomWidgetContainer.classList.add("hidden");
-          searchBarState = "open";
-        }
-      });
-
-      document.addEventListener("click", (e) => {
-        if (
-          searchBarState === "open" &&
-          !searchBar.contains(e.target) &&
-          !searchBar.parentElement.contains(e.target)
-        ) {
-          searchBar.parentElement.parentElement.classList.remove("open");
-          searchBar.parentElement.parentElement.classList.add("close");
-          bottomWidgetContainer.classList.remove("hidden");
-          searchBarState = "closed";
-          suggestionsBox.innerHTML = "";
-        }
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "/" && e.target !== searchBar) {
-          e.preventDefault();
-          searchBar.focus();
-        }
-      });
-
-      searchBar.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const input = searchBar.value.trim();
-          const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/;
-
-          if (urlRegex.test(input)) {
-            const search =
-              input.startsWith("http://") || input.startsWith("https://")
-                ? input
-                : "http://" + input;
-            window.open(search, "_blank");
-          } else {
-            window.open(
-              "https://www.google.com/search?q=" + encodeURIComponent(input),
-              "_blank"
-            );
-          }
-        }
-      });
-
-      function fetchGoogleSuggestions(query) {
-        const endpoint = `https://api.duckduckgo.com/?q=${encodeURIComponent(
-          query
-        )}&format=json&no_html=1`;
-
-        fetch(endpoint)
-          .then((res) => res.json())
-          .then((data) => {
-            const allTopics = [];
-
-            const extractTopics = (topic) => {
-              if (topic && topic.Text && typeof topic.Text === "string") {
-                const text = topic.Text.trim();
-                if (text.length > 0 && text.length <= 60) {
-                  allTopics.push(text);
-                }
-              }
-            };
-
-            (data.RelatedTopics || []).forEach((topic) => {
-              if (topic.Topics && Array.isArray(topic.Topics)) {
-                topic.Topics.forEach(extractTopics);
-              } else {
-                extractTopics(topic);
-              }
-            });
-
-            const seen = new Set();
-            const unique = allTopics.filter((text) => {
-              const lower = text.toLowerCase();
-              if (seen.has(lower)) return false;
-              seen.add(lower);
-              return true;
-            });
-
-            const startsWith = unique.filter((t) =>
-              t.toLowerCase().startsWith(query.toLowerCase())
-            );
-            const rest = unique.filter(
-              (t) => !t.toLowerCase().startsWith(query.toLowerCase())
-            );
-
-            const suggestions = [...startsWith, ...rest].slice(0, 3);
-            showSuggestions(suggestions, query);
-          })
-          .catch((err) =>
-            console.error("DuckDuckGo suggestion fetch error:", err)
-          );
-      }
-
-      function showSuggestions(suggestions, input) {
-        suggestionsBox.innerHTML = "";
-
-        const escapedInput = input.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, "\\$&");
-
-        suggestions.forEach((text, index) => {
-          const regex = new RegExp(`(${escapedInput})`, "i");
-          const div = document.createElement("div");
-          div.innerHTML = text.replace(regex, "<strong>$1</strong>");
-          div.className = "suggestion";
-          div.style.animationDelay = `${index * 80}ms`;
-          div.addEventListener("click", () => {
-            searchBar.blur();
-            window.open(
-              "https://www.google.com/search?q=" + encodeURIComponent(text),
-              "_blank"
-            );
-          });
-          suggestionsBox.appendChild(div);
         });
-      }
-      // #endregion
-      //==================================================
 
-      //==================================================
-      // #region Speech Recognition
-      function startRecognition() {
-        searchBar.classList.add("listening-text");
-        searchBar.placeholder = "Listening...";
-        const SpeechRecognition =
-          window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-          alert("Sorry, your browser does not support Speech Recognition.");
-          return;
-        }
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "/" && e.target !== searchBar) {
+            e.preventDefault();
+            searchBar.focus();
+          }
+        });
 
-        const recognition = new SpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
-        let finalTranscript = "";
+        searchBar.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const input = searchBar.value.trim();
+            const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/;
 
-        recognition.onresult = (event) => {
-          let interimTranscript = "";
-          for (let i = 0; i < event.results.length; i++) {
-            const result = event.results[i];
-            const transcript = result[0].transcript;
-            if (result.isFinal) {
-              finalTranscript += transcript + " ";
-              searchBar.focus();
-              const enter = new KeyboardEvent("keydown", {
-                key: "Enter",
-                code: "Enter",
-                which: 13,
-                keyCode: 13,
-                bubbles: true,
-                cancelable: true,
-              });
-              fetchGoogleSuggestions(searchBar.value.trim());
-              searchBar.dispatchEvent(enter);
+            if (urlRegex.test(input)) {
+              const search =
+                input.startsWith("http://") || input.startsWith("https://")
+                  ? input
+                  : "http://" + input;
+              window.open(search, "_blank");
             } else {
-              interimTranscript += transcript;
-            }
-          }
-          searchBar.value = finalTranscript + interimTranscript;
-        };
-
-        recognition.onerror = (event) => {
-          console.error("Speech recognition error:", event.error);
-        };
-
-        recognition.onend = () => {
-          searchBar.classList.remove("listening-text");
-          searchBar.placeholder = "Search...";
-        };
-
-        recognition.start();
-      }
-
-      document
-        .getElementById("microphone-icon")
-        .addEventListener("click", startRecognition);
-      // #endregion
-      //==================================================
-
-      //==================================================
-      // #region Image Modal
-      document.getElementById("camera-icon").addEventListener("click", () => {
-        modal.classList.remove("hidden");
-        imageInput.value = "";
-        imageInput.focus();
-      });
-
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          modal.classList.add("hidden");
-        }
-      });
-
-      imageSubmit.addEventListener("click", () => {
-        const url = imageInput.value.trim();
-        if (
-          /\.(jpeg|jpg|png|gif|webp|bmp|tiff)/i.test(url) &&
-          !url.toLowerCase().includes(".svg")
-        ) {
-          const query = encodeURIComponent(url);
-          window.open("https://lens.google.com/uploadbyurl?url=" + query);
-          modal.classList.add("hidden");
-        } else {
-          imageInput.classList.add("error-shake");
-          setTimeout(() => imageInput.classList.remove("error-shake"), 600);
-        }
-      });
-
-      imageInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") imageSubmit.click();
-      });
-      // #endregion
-      //==================================================
-
-      // Get Light/Dark Mode Buttons
-      const lightModeButton = document.getElementById("light-mode-button");
-      const darkModeButton = document.getElementById("dark-mode-button");
-      const materialModeButton = document.getElementById(
-        "material-mode-button"
-      );
-
-      // Apply Saved Theme on Load
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme) {
-        document.body.classList.add(savedTheme);
-        updateSelectedMode(savedTheme);
-        checkUIMode(); // Ensure the UI mode is properly updated
-      }
-
-      // Light Mode Button Click Event
-      lightModeButton.addEventListener("click", () => {
-        document.body.classList.remove("dark-mode");
-        document.body.classList.add("light-mode");
-        localStorage.setItem("theme", "light-mode");
-        updateSelectedMode("light-mode");
-      });
-
-      // Dark Mode Button Click Event
-      darkModeButton.addEventListener("click", () => {
-        document.body.classList.remove("light-mode");
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("theme", "dark-mode");
-        updateSelectedMode("dark-mode");
-      });
-      materialModeButton.addEventListener("click", () => {
-        document.body.classList.remove("material-mode");
-        document.body.classList.add("material-mode");
-        localStorage.setItem("theme", "material-mode");
-        updateSelectedMode("material-mode");
-      });
-
-      // Update Selected Mode
-      function updateSelectedMode(mode) {
-        if (mode === "light-mode") {
-          lightModeButton.classList.add("selected");
-          darkModeButton.classList.remove("selected");
-          materialModeButton.classList.remove("selected");
-        } else if (mode === "dark-mode") {
-          darkModeButton.classList.add("selected");
-          lightModeButton.classList.remove("selected");
-          materialModeButton.classList.remove("selected");
-        } else if (mode === "material-mode") {
-          materialModeButton.classList.add("selected");
-          lightModeButton.classList.remove("selected");
-          darkModeButton.classList.remove("selected");
-        }
-      }
-      const saveBtn = document.getElementById("save-btn");
-      const saveIcon = document.getElementById("save-icon");
-
-      saveBtn.addEventListener("click", async () => {
-        const fileUrl =
-          "https://cdn.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html";
-        const defaultFileName = "index.html";
-
-        // Ask the user for a file name
-        const fileName = prompt(
-          "Enter the file name to save:",
-          defaultFileName
-        );
-        if (!fileName) return;
-
-        try {
-          // Fetch the file content
-          const response = await fetch(fileUrl, {
-            cache: "no-store", // forces fetch to bypass HTTP cache
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to fetch the file.");
-          }
-          const fileContent = await response.text();
-
-          // Create a blob and trigger download
-          const blob = new Blob([fileContent], { type: "text/html" });
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = fileName;
-          link.click();
-
-          // Clean up
-          URL.revokeObjectURL(link.href);
-        } catch (error) {
-          console.error("Error saving the file:", error);
-          alert("Failed to save the file. Check the console for details.");
-        }
-      });
-
-      // Initial check
-      updateConnectionStatus();
-
-      // ==================================================
-      // #region Export/Import Settings
-      exportBtn.addEventListener("click", () => {
-        const theme = localStorage.getItem("theme");
-        const backgroundImage = localStorage.getItem("config_backgroundImage");
-        const settings = {
-          theme,
-          backgroundImage,
-        };
-        const blob = new Blob([JSON.stringify(settings)], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "settings.json";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
-      importBtn.addEventListener("click", () => {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.accept = ".json";
-        fileInput.addEventListener("change", (event) => {
-          const file = event.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              try {
-                const settings = JSON.parse(e.target.result);
-                localStorage.setItem("theme", settings.theme);
-                localStorage.setItem(
-                  "config_backgroundImage",
-                  settings.backgroundImage
-                );
-                location.reload();
-              } catch (error) {
-                console.error("Error parsing JSON:", error);
-              }
-            };
-            reader.readAsText(file);
-          }
-        });
-        fileInput.click();
-      });
-      // #endregion
-      // ==================================================
-
-      const weatherDescriptions = {
-        0: "Clear sky",
-        1: "Mainly clear",
-        2: "Partly cloudy",
-        3: "Overcast",
-        45: "Fog",
-        48: "Depositing rime fog",
-        51: "Light drizzle",
-        53: "Moderate drizzle",
-        55: "Dense drizzle",
-        56: "Light freezing drizzle",
-        57: "Dense freezing drizzle",
-        61: "Slight rain",
-        63: "Moderate rain",
-        65: "Heavy rain",
-        66: "Light freezing rain",
-        67: "Heavy freezing rain",
-        71: "Slight snowfall",
-        73: "Moderate snowfall",
-        75: "Heavy snowfall",
-        77: "Snow grains",
-        80: "Slight rain showers",
-        81: "Moderate rain showers",
-        82: "Violent rain showers",
-        85: "Slight snow showers",
-        86: "Heavy snow showers",
-        95: "Thunderstorm",
-        96: "Thunderstorm + slight hail",
-        99: "Thunderstorm + heavy hail",
-      };
-
-      function degToCompass(num) {
-        const val = Math.floor(num / 22.5 + 0.5);
-        const arr = [
-          "N",
-          "NNE",
-          "NE",
-          "ENE",
-          "E",
-          "ESE",
-          "SE",
-          "SSE",
-          "S",
-          "SSW",
-          "SW",
-          "WSW",
-          "W",
-          "WNW",
-          "NW",
-          "NNW",
-        ];
-        return arr[val % 16];
-      }
-
-      async function loadWeather() {
-        try {
-          let ipData;
-          const cachedLocation = localStorage.getItem("cachedIPData");
-          const cacheTimestamp = localStorage.getItem("cachedIPDataTimestamp");
-
-          const isCacheValid =
-            cachedLocation &&
-            cacheTimestamp &&
-            Date.now() - parseInt(cacheTimestamp) < 24 * 60 * 60 * 1000;
-
-          if (isCacheValid) {
-            ipData = JSON.parse(cachedLocation);
-          } else {
-            try {
-              const ipRes = await fetch("https://ipapi.co/json");
-              ipData = await ipRes.json();
-              localStorage.setItem("cachedIPData", JSON.stringify(ipData));
-              localStorage.setItem(
-                "cachedIPDataTimestamp",
-                Date.now().toString()
+              window.open(
+                "https://www.google.com/search?q=" + encodeURIComponent(input),
+                "_blank"
               );
-            } catch (e) {
-              ipData = {
-                latitude: 41.1792,
-                longitude: -73.1894,
-                city: "Bridgeport",
-              };
             }
           }
+        });
 
-          const lat = ipData.latitude;
-          const lon = ipData.longitude;
-          const city = ipData.city;
+        function fetchGoogleSuggestions(query) {
+          const endpoint = `https://api.duckduckgo.com/?q=${encodeURIComponent(
+            query
+          )}&format=json&no_html=1`;
 
-          const weatherRes = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weathercode&timezone=America/New_York`
+          fetch(endpoint)
+            .then((res) => res.json())
+            .then((data) => {
+              const allTopics = [];
+
+              const extractTopics = (topic) => {
+                if (topic && topic.Text && typeof topic.Text === "string") {
+                  const text = topic.Text.trim();
+                  if (text.length > 0 && text.length <= 60) {
+                    allTopics.push(text);
+                  }
+                }
+              };
+
+              (data.RelatedTopics || []).forEach((topic) => {
+                if (topic.Topics && Array.isArray(topic.Topics)) {
+                  topic.Topics.forEach(extractTopics);
+                } else {
+                  extractTopics(topic);
+                }
+              });
+
+              const seen = new Set();
+              const unique = allTopics.filter((text) => {
+                const lower = text.toLowerCase();
+                if (seen.has(lower)) return false;
+                seen.add(lower);
+                return true;
+              });
+
+              const startsWith = unique.filter((t) =>
+                t.toLowerCase().startsWith(query.toLowerCase())
+              );
+              const rest = unique.filter(
+                (t) => !t.toLowerCase().startsWith(query.toLowerCase())
+              );
+
+              const suggestions = [...startsWith, ...rest].slice(0, 3);
+              showSuggestions(suggestions, query);
+            })
+            .catch((err) =>
+              console.error("DuckDuckGo suggestion fetch error:", err)
+            );
+        }
+
+        function showSuggestions(suggestions, input) {
+          suggestionsBox.innerHTML = "";
+
+          const escapedInput = input.replace(
+            /[.*+?^=!:${}()|\[\]\/\\]/g,
+            "\\$&"
           );
-          const weatherData = await weatherRes.json();
-          const weather = weatherData.current_weather;
 
-          const tempF = Math.round((weather.temperature * 9) / 5 + 32);
-          const windDir = degToCompass(weather.winddirection);
-          const windSpeed = Math.round(weather.windspeed / 1.609);
-          const code = weather.weathercode;
-          const condition = weatherDescriptions[code] || "Unknown";
+          suggestions.forEach((text, index) => {
+            const regex = new RegExp(`(${escapedInput})`, "i");
+            const div = document.createElement("div");
+            div.innerHTML = text.replace(regex, "<strong>$1</strong>");
+            div.className = "suggestion";
+            div.style.animationDelay = `${index * 80}ms`;
+            div.addEventListener("click", () => {
+              searchBar.blur();
+              window.open(
+                "https://www.google.com/search?q=" + encodeURIComponent(text),
+                "_blank"
+              );
+            });
+            suggestionsBox.appendChild(div);
+          });
+        }
+        // #endregion
+        //==================================================
 
-          const time = new Date(weather.time).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
+        //==================================================
+        // #region Speech Recognition
+        function startRecognition() {
+          searchBar.classList.add("listening-text");
+          searchBar.placeholder = "Listening...";
+          const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) {
+            alert("Sorry, your browser does not support Speech Recognition.");
+            return;
+          }
+
+          const recognition = new SpeechRecognition();
+          recognition.lang = "en-US";
+          recognition.interimResults = true;
+          recognition.maxAlternatives = 1;
+          let finalTranscript = "";
+
+          recognition.onresult = (event) => {
+            let interimTranscript = "";
+            for (let i = 0; i < event.results.length; i++) {
+              const result = event.results[i];
+              const transcript = result[0].transcript;
+              if (result.isFinal) {
+                finalTranscript += transcript + " ";
+                searchBar.focus();
+                const enter = new KeyboardEvent("keydown", {
+                  key: "Enter",
+                  code: "Enter",
+                  which: 13,
+                  keyCode: 13,
+                  bubbles: true,
+                  cancelable: true,
+                });
+                fetchGoogleSuggestions(searchBar.value.trim());
+                searchBar.dispatchEvent(enter);
+              } else {
+                interimTranscript += transcript;
+              }
+            }
+            searchBar.value = finalTranscript + interimTranscript;
+          };
+
+          recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+          };
+
+          recognition.onend = () => {
+            searchBar.classList.remove("listening-text");
+            searchBar.placeholder = "Search...";
+          };
+
+          recognition.start();
+        }
+
+        document
+          .getElementById("microphone-icon")
+          .addEventListener("click", startRecognition);
+        // #endregion
+        //==================================================
+
+        //==================================================
+        // #region Image Modal
+        document.getElementById("camera-icon").addEventListener("click", () => {
+          modal.classList.remove("hidden");
+          imageInput.value = "";
+          imageInput.focus();
+        });
+
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) {
+            modal.classList.add("hidden");
+          }
+        });
+
+        imageSubmit.addEventListener("click", () => {
+          const url = imageInput.value.trim();
+          if (
+            /\.(jpeg|jpg|png|gif|webp|bmp|tiff)/i.test(url) &&
+            !url.toLowerCase().includes(".svg")
+          ) {
+            const query = encodeURIComponent(url);
+            window.open("https://lens.google.com/uploadbyurl?url=" + query);
+            modal.classList.add("hidden");
+          } else {
+            imageInput.classList.add("error-shake");
+            setTimeout(() => imageInput.classList.remove("error-shake"), 600);
+          }
+        });
+
+        imageInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") imageSubmit.click();
+        });
+        // #endregion
+        //==================================================
+
+        // Get Light/Dark Mode Buttons
+        const lightModeButton = document.getElementById("light-mode-button");
+        const darkModeButton = document.getElementById("dark-mode-button");
+        const materialModeButton = document.getElementById(
+          "material-mode-button"
+        );
+
+        // Apply Saved Theme on Load
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) {
+          document.body.classList.add(savedTheme);
+          updateSelectedMode(savedTheme);
+          checkUIMode(); // Ensure the UI mode is properly updated
+        }
+
+        // Light Mode Button Click Event
+        lightModeButton.addEventListener("click", () => {
+          document.body.classList.remove("dark-mode");
+          document.body.classList.add("light-mode");
+          localStorage.setItem("theme", "light-mode");
+          updateSelectedMode("light-mode");
+        });
+
+        // Dark Mode Button Click Event
+        darkModeButton.addEventListener("click", () => {
+          document.body.classList.remove("light-mode");
+          document.body.classList.add("dark-mode");
+          localStorage.setItem("theme", "dark-mode");
+          updateSelectedMode("dark-mode");
+        });
+        materialModeButton.addEventListener("click", () => {
+          document.body.classList.remove("material-mode");
+          document.body.classList.add("material-mode");
+          localStorage.setItem("theme", "material-mode");
+          updateSelectedMode("material-mode");
+        });
+
+        // Update Selected Mode
+        function updateSelectedMode(mode) {
+          if (mode === "light-mode") {
+            lightModeButton.classList.add("selected");
+            darkModeButton.classList.remove("selected");
+            materialModeButton.classList.remove("selected");
+          } else if (mode === "dark-mode") {
+            darkModeButton.classList.add("selected");
+            lightModeButton.classList.remove("selected");
+            materialModeButton.classList.remove("selected");
+          } else if (mode === "material-mode") {
+            materialModeButton.classList.add("selected");
+            lightModeButton.classList.remove("selected");
+            darkModeButton.classList.remove("selected");
+          }
+        }
+        const saveBtn = document.getElementById("save-btn");
+        const saveIcon = document.getElementById("save-icon");
+
+        saveBtn.addEventListener("click", async () => {
+          const fileUrl =
+            "https://cdn.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html";
+          const purgeUrl = `https://purge.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html`;
+          const defaultFileName = "index.html";
+
+          const fileName = prompt(
+            "Enter the file name to save:",
+            defaultFileName
+          );
+          if (!fileName) return;
+
+          try {
+            // Purge the CDN cache
+            await fetch(purgeUrl, { method: "GET" });
+
+            // Wait a moment to ensure purge takes effect (optional but safer)
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Fetch the latest file content
+            const response = await fetch(fileUrl, { cache: "no-store" });
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch the file.");
+            }
+
+            const fileContent = await response.text();
+
+            // Create a blob and trigger download
+            const blob = new Blob([fileContent], { type: "text/html" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            link.click();
+
+            // Clean up
+            URL.revokeObjectURL(link.href);
+          } catch (error) {
+            console.error("Error saving the file:", error);
+            alert("Failed to save the file. Check the console for details.");
+          }
+        });
+
+        // Initial check
+        updateConnectionStatus();
+
+        // ==================================================
+        // #region Export/Import Settings
+        exportBtn.addEventListener("click", () => {
+          const theme = localStorage.getItem("theme");
+          const backgroundImage = localStorage.getItem(
+            "config_backgroundImage"
+          );
+          const settings = {
+            theme,
+            backgroundImage,
+          };
+          const blob = new Blob([JSON.stringify(settings)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "settings.json";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+        importBtn.addEventListener("click", () => {
+          const fileInput = document.createElement("input");
+          fileInput.type = "file";
+          fileInput.accept = ".json";
+          fileInput.addEventListener("change", (event) => {
+            const file = event.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                try {
+                  const settings = JSON.parse(e.target.result);
+                  localStorage.setItem("theme", settings.theme);
+                  localStorage.setItem(
+                    "config_backgroundImage",
+                    settings.backgroundImage
+                  );
+                  location.reload();
+                } catch (error) {
+                  console.error("Error parsing JSON:", error);
+                }
+              };
+              reader.readAsText(file);
+            }
+          });
+          fileInput.click();
+        });
+        // #endregion
+        // ==================================================
+
+        const weatherDescriptions = {
+          0: "Clear sky",
+          1: "Mainly clear",
+          2: "Partly cloudy",
+          3: "Overcast",
+          45: "Fog",
+          48: "Depositing rime fog",
+          51: "Light drizzle",
+          53: "Moderate drizzle",
+          55: "Dense drizzle",
+          56: "Light freezing drizzle",
+          57: "Dense freezing drizzle",
+          61: "Slight rain",
+          63: "Moderate rain",
+          65: "Heavy rain",
+          66: "Light freezing rain",
+          67: "Heavy freezing rain",
+          71: "Slight snowfall",
+          73: "Moderate snowfall",
+          75: "Heavy snowfall",
+          77: "Snow grains",
+          80: "Slight rain showers",
+          81: "Moderate rain showers",
+          82: "Violent rain showers",
+          85: "Slight snow showers",
+          86: "Heavy snow showers",
+          95: "Thunderstorm",
+          96: "Thunderstorm + slight hail",
+          99: "Thunderstorm + heavy hail",
+        };
+
+        function degToCompass(num) {
+          const val = Math.floor(num / 22.5 + 0.5);
+          const arr = [
+            "N",
+            "NNE",
+            "NE",
+            "ENE",
+            "E",
+            "ESE",
+            "SE",
+            "SSE",
+            "S",
+            "SSW",
+            "SW",
+            "WSW",
+            "W",
+            "WNW",
+            "NW",
+            "NNW",
+          ];
+          return arr[val % 16];
+        }
+
+        async function loadWeather() {
+          try {
+            let ipData;
+            const cachedLocation = localStorage.getItem("cachedIPData");
+            const cacheTimestamp = localStorage.getItem(
+              "cachedIPDataTimestamp"
+            );
+
+            const isCacheValid =
+              cachedLocation &&
+              cacheTimestamp &&
+              Date.now() - parseInt(cacheTimestamp) < 24 * 60 * 60 * 1000;
+
+            if (isCacheValid) {
+              ipData = JSON.parse(cachedLocation);
+            } else {
+              try {
+                const ipRes = await fetch("https://ipapi.co/json");
+                ipData = await ipRes.json();
+                localStorage.setItem("cachedIPData", JSON.stringify(ipData));
+                localStorage.setItem(
+                  "cachedIPDataTimestamp",
+                  Date.now().toString()
+                );
+              } catch (e) {
+                ipData = {
+                  latitude: 41.1792,
+                  longitude: -73.1894,
+                  city: "Bridgeport",
+                };
+              }
+            }
+
+            const lat = ipData.latitude;
+            const lon = ipData.longitude;
+            const city = ipData.city;
+
+            const weatherRes = await fetch(
+              `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,daylight_duration,sunshine_duration,uv_index_max,precipitation_sum,precipitation_hours,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,weathercode&timezone=America/New_York`
+            );
+            const weatherData = await weatherRes.json();
+            const weather = weatherData.current_weather;
+
+            const tempF = Math.round((weather.temperature * 9) / 5 + 32);
+            const windDir = degToCompass(weather.winddirection);
+            const windSpeed = Math.round(weather.windspeed / 1.609);
+            const code = weather.weathercode;
+            const condition = weatherDescriptions[code] || "Unknown";
+
+            const time = new Date(weather.time).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            const tomorrow = weatherData.daily;
+            const maxTempF = Math.round(
+              (tomorrow.temperature_2m_max[1] * 9) / 5 + 32
+            );
+            const minTempF = Math.round(
+              (tomorrow.temperature_2m_min[1] * 9) / 5 + 32
+            );
+            const apparentMaxTempF = Math.round(
+              (tomorrow.apparent_temperature_max[1] * 9) / 5 + 32
+            );
+            const apparentMinTempF = Math.round(
+              (tomorrow.apparent_temperature_min[1] * 9) / 5 + 32
+            );
+            const precipitationSum = tomorrow.precipitation_sum[1];
+            const forecastCondition =
+              weatherDescriptions[tomorrow.weathercode[1]] || "Unknown";
+
+            let weatherWidgetContainer;
+            let factor =
+              localStorage.getItem("weatherWidgetLocation") ||
+              weatherWidgetLocation;
+            if (factor === "bottom") {
+              weatherWidgetContainer = bottomWidgetContainer;
+            } else if (factor === "left") {
+              weatherWidgetContainer = leftWidgetContainer;
+            } else if (factor === "right") {
+              weatherWidgetContainer = rightWidgetContainer;
+            } else {
+              weatherWidgetContainer = bottomWidgetContainer;
+            }
+
+            weatherWidgetContainer.innerHTML = `
+        <div id="weather-widget">
+          <div class="today">
+            <div class="weather-main">
+              <span class="material-symbols-outlined" title="${condition}">thermostat</span>
+              <div class="weather-info">
+                <h2>${city}</h2>
+                <p class="temp">${tempF}°F</p>
+                <p class="desc">${condition}</p>
+                <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
+                <p class="detail">🕒 Updated: ${time}</p>
+              </div>
+            </div>
+          </div>
+          <div class="tomorrow">
+            <div class="weather-main">
+              <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
+              <div class="weather-info">
+                <h2>Tomorrow</h2>
+                <p class="temp">${maxTempF}° / ${minTempF}°F</p>
+                <p class="desc">${forecastCondition}</p>
+                <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
+                <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+            weatherWidget = document.querySelector("#weather-widget");
+            if (weatherWidget) {
+              if (
+                weatherWidgetLocation === "bottom" ||
+                weatherWidgetLocation === "top"
+              ) {
+                weatherWidget.classList.add("horizontal");
+              } else if (
+                weatherWidgetLocation === "left" ||
+                weatherWidgetLocation === "right"
+              ) {
+                weatherWidget.classList.add("vertical");
+                const style = getComputedStyle(weatherWidget);
+                const width = style.width;
+                const height = style.height;
+                weatherWidget.style.width = height;
+                weatherWidget.style.height = width;
+              } else {
+                weatherWidget.classList.remove("vertical", "horizontal");
+              }
+            }
+          } catch (err) {
+            console.error("Weather load failed:", err);
+            weatherWidgetContainer.innerHTML = `
+        <div class="weather-widget">
+          <p>Unable to load weather. Try again later.</p>
+        </div>
+      `;
+          }
+        }
+
+        function degToCompass(deg) {
+          const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+          return dirs[Math.round(deg / 45) % 8];
+        }
+        loadWeather();
+        setInterval(() => {
+          loadWeather();
+        }, 60000 * 60);
+        let hoveringWeatherWidget = false;
+
+        document.addEventListener("mouseover", (e) => {
+          if (weatherWidget) {
+            // Temporarily disable pointer events to detect what's behind
+            weatherWidget.style.pointerEvents = "none";
+          }
+
+          const el = document.elementFromPoint(e.clientX, e.clientY);
+
+          // Check if hovered element is not just <body> or <html>
+          if (el && el !== document.body && el !== document.documentElement) {
+            hoveredElement = el;
+          } else {
+            hoveredElement = null;
+          }
+
+          if (weatherWidget) {
+            // Restore pointer events after detection
+            weatherWidget.style.pointerEvents = "auto";
+
+            // Now check if mouse is *actually* over the widget
+            const widgetRect = weatherWidget.getBoundingClientRect();
+            hoveringWeatherWidget =
+              e.clientX >= widgetRect.left &&
+              e.clientX <= widgetRect.right &&
+              e.clientY >= widgetRect.top &&
+              e.clientY <= widgetRect.bottom;
+          } else {
+            hoveringWeatherWidget = false;
+          }
+        });
+
+        // Move these outside the loadWeather function to avoid recreating them
+        let dragPreview = null;
+        const onMouseMove = (e) => {
+          if (dragPreview) {
+            dragPreview.style.left = `${e.clientX + 10}px`;
+            dragPreview.style.top = `${e.clientY + 10}px`;
+          }
+          [
+            leftWidgetContainer,
+            rightWidgetContainer,
+            bottomWidgetContainer,
+          ].forEach((container) => {
+            container.classList.add("drag-active");
+          });
+        };
+
+        async function onMouseUp() {
+          if (dragPreview) {
+            dragPreview.remove();
+            dragPreview = null;
+          }
+          [
+            leftWidgetContainer,
+            rightWidgetContainer,
+            bottomWidgetContainer,
+          ].forEach((container) => {
+            container.classList.remove("drag-active");
           });
 
-          const tomorrow = weatherData.daily;
-          const maxTempF = Math.round(
-            (tomorrow.temperature_2m_max[1] * 9) / 5 + 32
-          );
-          const minTempF = Math.round(
-            (tomorrow.temperature_2m_min[1] * 9) / 5 + 32
-          );
-          const apparentMaxTempF = Math.round(
-            (tomorrow.apparent_temperature_max[1] * 9) / 5 + 32
-          );
-          const apparentMinTempF = Math.round(
-            (tomorrow.apparent_temperature_min[1] * 9) / 5 + 32
-          );
-          const precipitationSum = tomorrow.precipitation_sum[1];
-          const forecastCondition =
-            weatherDescriptions[tomorrow.weathercode[1]] || "Unknown";
-
-          let weatherWidgetContainer;
-          let factor =
-            localStorage.getItem("weatherWidgetLocation") ||
-            weatherWidgetLocation;
-          if (factor === "bottom") {
-            weatherWidgetContainer = bottomWidgetContainer;
-          } else if (factor === "left") {
-            weatherWidgetContainer = leftWidgetContainer;
-          } else if (factor === "right") {
-            weatherWidgetContainer = rightWidgetContainer;
-          } else {
-            weatherWidgetContainer = bottomWidgetContainer;
-          }
-
-          weatherWidgetContainer.innerHTML = `
-      <div id="weather-widget">
-        <div class="today">
-          <div class="weather-main">
-            <span class="material-symbols-outlined" title="${condition}">thermostat</span>
-            <div class="weather-info">
-              <h2>${city}</h2>
-              <p class="temp">${tempF}°F</p>
-              <p class="desc">${condition}</p>
-              <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
-              <p class="detail">🕒 Updated: ${time}</p>
-            </div>
-          </div>
-        </div>
-        <div class="tomorrow">
-          <div class="weather-main">
-            <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
-            <div class="weather-info">
-              <h2>Tomorrow</h2>
-              <p class="temp">${maxTempF}° / ${minTempF}°F</p>
-              <p class="desc">${forecastCondition}</p>
-              <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
-              <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-          weatherWidget = document.querySelector("#weather-widget");
           if (weatherWidget) {
-            if (
-              weatherWidgetLocation === "bottom" ||
-              weatherWidgetLocation === "top"
-            ) {
-              weatherWidget.classList.add("horizontal");
-            } else if (
-              weatherWidgetLocation === "left" ||
-              weatherWidgetLocation === "right"
-            ) {
-              weatherWidget.classList.add("vertical");
-              const style = getComputedStyle(weatherWidget);
-              const width = style.width;
-              const height = style.height;
-              weatherWidget.style.width = height;
-              weatherWidget.style.height = width;
-            } else {
-              weatherWidget.classList.remove("vertical", "horizontal");
+            weatherWidget.style.outline = "";
+          }
+
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+
+          if (hoveredElement && weatherWidget) {
+            weatherWidget.remove();
+
+            if (hoveredElement.id === "widgets-container-left") {
+              weatherWidgetLocation = "left";
+            } else if (hoveredElement.id === "widgets-container-right") {
+              weatherWidgetLocation = "right";
+            } else if (hoveredElement.id === "widgets-container-bottom") {
+              weatherWidgetLocation = "bottom";
             }
-          }
-        } catch (err) {
-          console.error("Weather load failed:", err);
-          weatherWidgetContainer.innerHTML = `
-      <div class="weather-widget">
-        <p>Unable to load weather. Try again later.</p>
-      </div>
-    `;
-        }
-      }
-
-      function degToCompass(deg) {
-        const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-        return dirs[Math.round(deg / 45) % 8];
-      }
-      loadWeather();
-      setInterval(() => {
-        loadWeather();
-      }, 60000 * 60);
-      let hoveringWeatherWidget = false;
-
-      document.addEventListener("mouseover", (e) => {
-        if (weatherWidget) {
-          // Temporarily disable pointer events to detect what's behind
-          weatherWidget.style.pointerEvents = "none";
-        }
-
-        const el = document.elementFromPoint(e.clientX, e.clientY);
-
-        // Check if hovered element is not just <body> or <html>
-        if (el && el !== document.body && el !== document.documentElement) {
-          hoveredElement = el;
-        } else {
-          hoveredElement = null;
-        }
-
-        if (weatherWidget) {
-          // Restore pointer events after detection
-          weatherWidget.style.pointerEvents = "auto";
-
-          // Now check if mouse is *actually* over the widget
-          const widgetRect = weatherWidget.getBoundingClientRect();
-          hoveringWeatherWidget =
-            e.clientX >= widgetRect.left &&
-            e.clientX <= widgetRect.right &&
-            e.clientY >= widgetRect.top &&
-            e.clientY <= widgetRect.bottom;
-        } else {
-          hoveringWeatherWidget = false;
-        }
-      });
-
-      // Move these outside the loadWeather function to avoid recreating them
-      let dragPreview = null;
-      const onMouseMove = (e) => {
-        if (dragPreview) {
-          dragPreview.style.left = `${e.clientX + 10}px`;
-          dragPreview.style.top = `${e.clientY + 10}px`;
-        }
-        [
-          leftWidgetContainer,
-          rightWidgetContainer,
-          bottomWidgetContainer,
-        ].forEach((container) => {
-          container.classList.add("drag-active");
-        });
-      };
-
-      async function onMouseUp() {
-        if (dragPreview) {
-          dragPreview.remove();
-          dragPreview = null;
-        }
-        [
-          leftWidgetContainer,
-          rightWidgetContainer,
-          bottomWidgetContainer,
-        ].forEach((container) => {
-          container.classList.remove("drag-active");
-        });
-
-        if (weatherWidget) {
-          weatherWidget.style.outline = "";
-        }
-
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
-
-        if (hoveredElement && weatherWidget) {
-          weatherWidget.remove();
-
-          if (hoveredElement.id === "widgets-container-left") {
-            weatherWidgetLocation = "left";
-          } else if (hoveredElement.id === "widgets-container-right") {
-            weatherWidgetLocation = "right";
-          } else if (hoveredElement.id === "widgets-container-bottom") {
-            weatherWidgetLocation = "bottom";
-          }
-          localStorage.setItem("weatherWidgetLocation", weatherWidgetLocation);
-
-          await loadWeather();
-        } else {
-          await loadWeather();
-        }
-      }
-
-      // Replace the event listener setup in loadWeather() with this:
-      document.addEventListener(
-        "mousedown",
-        (e) => {
-          if (hoveringWeatherWidget && weatherWidget) {
-            // Remove any existing previews
-            document
-              .querySelectorAll(".drag-preview")
-              .forEach((el) => el.remove());
-
-            // Create visual ghost
-            dragPreview = document.createElement("div");
-            dragPreview.classList.add("drag-preview");
-            dragPreview.innerHTML = weatherWidget.innerHTML;
-            document.body.appendChild(dragPreview);
-
-            Object.assign(dragPreview.style, {
-              position: "fixed",
-              pointerEvents: "none",
-              zIndex: "1001",
-              opacity: "0.8",
-              transform: "scale(0.9)",
-              background: weatherWidget.style.background,
-              color: weatherWidget.style.color,
-              borderRadius: "12px",
-              padding: "10px",
-              width: weatherWidget.offsetWidth / 4 + "px",
-              height: weatherWidget.offsetHeight / 4 + "px",
-              fontSize:
-                parseFloat(getComputedStyle(weatherWidget).fontSize) / 4 + "px",
-              overflow: "hidden",
-              left: `${e.clientX + 10}px`,
-              top: `${e.clientY + 10}px`,
-              flexDirection: weatherWidget.classList.contains("horizontal")
-                ? "row"
-                : "column",
-              display: "flex",
-            });
-            icons = dragPreview.querySelectorAll(
-              ".material-symbols-outlined, .material-icons"
+            localStorage.setItem(
+              "weatherWidgetLocation",
+              weatherWidgetLocation
             );
-            icons.forEach((icon) => {
-              icon.style.fontSize =
-                parseFloat(
-                  getComputedStyle(
-                    weatherWidget.querySelector(".material-symbols-outlined")
-                  ).fontSize
-                ) /
-                  4 +
-                "px";
 
-              icon.style.marginRight =
-                parseFloat(
-                  getComputedStyle(
-                    weatherWidget.querySelector(".material-symbols-outlined")
-                  ).marginRight
-                ) /
-                  4 +
-                "px";
+            await loadWeather();
+            const mouseOverEvent = new MouseEvent("mouseover", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
             });
 
-            // Highlight the real widget
-            weatherWidget.style.outline = "2px dashed #2196f3";
-            weatherWidget.style.outlineOffset = "4px";
+            document.dispatchEvent(mouseOverEvent);
+          } else {
+            await loadWeather();
+            const mouseOverEvent = new MouseEvent("mouseover", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+            });
 
-            document.addEventListener("mousemove", onMouseMove);
-            document.addEventListener("mouseup", onMouseUp);
+            document.dispatchEvent(mouseOverEvent);
           }
-        },
-        { capture: true }
-      ); // Add capture phase to ensure single event handling
+        }
+
+        // Replace the event listener setup in loadWeather() with this:
+        document.addEventListener(
+          "mousedown",
+          (e) => {
+            if (hoveringWeatherWidget && weatherWidget) {
+              // Remove any existing previews
+              document
+                .querySelectorAll(".drag-preview")
+                .forEach((el) => el.remove());
+
+              // Create visual ghost
+              dragPreview = document.createElement("div");
+              dragPreview.classList.add("drag-preview");
+              dragPreview.innerHTML = weatherWidget.innerHTML;
+              document.body.appendChild(dragPreview);
+
+              Object.assign(dragPreview.style, {
+                position: "fixed",
+                pointerEvents: "none",
+                zIndex: "1001",
+                opacity: "0.8",
+                transform: "scale(0.9)",
+                background: weatherWidget.style.background,
+                backdropFilter: weatherWidget.style.backdropFilter,
+                boxShadow: weatherWidget.style.boxShadow,
+                color: weatherWidget.style.color,
+                borderRadius: "12px",
+                padding: "10px",
+                width: weatherWidget.offsetWidth / 4 + "px",
+                height: weatherWidget.offsetHeight / 4 + "px",
+                fontSize:
+                  parseFloat(getComputedStyle(weatherWidget).fontSize) / 4 +
+                  "px",
+                overflow: "hidden",
+                left: `${e.clientX + 10}px`,
+                top: `${e.clientY + 10}px`,
+                flexDirection: weatherWidget.classList.contains("horizontal")
+                  ? "row"
+                  : "column",
+                display: "flex",
+              });
+              icons = dragPreview.querySelectorAll(
+                ".material-symbols-outlined, .material-icons"
+              );
+              icons.forEach((icon) => {
+                icon.style.fontSize =
+                  parseFloat(
+                    getComputedStyle(
+                      weatherWidget.querySelector(".material-symbols-outlined")
+                    ).fontSize
+                  ) /
+                    4 +
+                  "px";
+
+                icon.style.marginRight =
+                  parseFloat(
+                    getComputedStyle(
+                      weatherWidget.querySelector(".material-symbols-outlined")
+                    ).marginRight
+                  ) /
+                    4 +
+                  "px";
+              });
+
+              // Highlight the real widget
+              weatherWidget.style.outline = "2px dashed #2196f3";
+              weatherWidget.style.outlineOffset = "4px";
+
+              document.addEventListener("mousemove", onMouseMove);
+              document.addEventListener("mouseup", onMouseUp);
+            }
+          },
+          { capture: true }
+        ); // Add capture phase to ensure single event handling
+      }
     </script>
   </body>
 </html>
