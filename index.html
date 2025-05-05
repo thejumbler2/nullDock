@@ -16,7 +16,23 @@
   </head>
   <body id="body">
     <style>
-      .weather-widget {
+      #widgets-container-right {
+        position: fixed;
+        top: -250px;
+        right: 0;
+      }
+      #widgets-container-left {
+        position: fixed;
+        top: -250px;
+        left: 0;
+      }
+      #weather-widget.vertical {
+        flex-direction: column !important; /* Stack vertically */
+      }
+      #weather-widget.horizontal {
+        flex-direction: row !important; /* Stack horizontally */
+      }
+      #weather-widget {
         display: flex;
         justify-content: space-between; /* Align today's and tomorrow's forecast horizontally */
         padding: 20px;
@@ -37,7 +53,7 @@
         gap: 16px;
       }
 
-      .weather-widget .material-symbols-outlined {
+      #weather-widget .material-symbols-outlined {
         font-size: 48px;
         color: #ccc;
         transition: transform 0.2s ease;
@@ -66,8 +82,8 @@
       }
 
       /* Both Today and Tomorrow need to be styled similarly */
-      .weather-widget .today,
-      .weather-widget .tomorrow {
+      #weather-widget .today,
+      #weather-widget .tomorrow {
         flex: 1; /* Both take up 50% of the space */
         display: flex;
         flex-direction: column;
@@ -75,46 +91,46 @@
       }
 
       /* Make both weather sections look like each other */
-      .weather-widget .today .weather-main,
-      .weather-widget .tomorrow .weather-main {
+      #weather-widget .today .weather-main,
+      #weather-widget .tomorrow .weather-main {
         display: flex;
         align-items: center;
         gap: 16px;
       }
 
-      .weather-widget .today .weather-info,
-      .weather-widget .tomorrow .weather-info {
+      #weather-widget .today .weather-info,
+      #weather-widget .tomorrow .weather-info {
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      .weather-widget .today .weather-info .temp,
-      .weather-widget .tomorrow .weather-info .temp {
+      #weather-widget .today .weather-info .temp,
+      #weather-widget .tomorrow .weather-info .temp {
         font-size: 2em;
         margin: 4px 0;
       }
 
-      .weather-widget .today .weather-info .desc,
-      .weather-widget .tomorrow .weather-info .desc {
+      #weather-widget .today .weather-info .desc,
+      #weather-widget .tomorrow .weather-info .desc {
         font-size: 1em;
         font-style: italic;
         color: #aaa;
       }
 
-      .weather-widget .today .weather-info .detail,
-      .weather-widget .tomorrow .weather-info .detail {
+      #weather-widget .today .weather-info .detail,
+      #weather-widget .tomorrow .weather-info .detail {
         font-size: 0.9em;
         color: #888;
       }
 
       /* Styling for tomorrow's section to ensure it mirrors today's */
-      .weather-widget .tomorrow {
+      #weather-widget.horizontal .tomorrow {
         margin-left: 20px; /* Add space between today's and tomorrow's forecast */
       }
 
       /* Dark mode styles */
-      .dark-mode .weather-widget {
+      .dark-mode #weather-widget {
         background: rgba(25, 25, 25, 0.7);
         backdrop-filter: blur(10px) brightness(0.7);
         -webkit-backdrop-filter: blur(10px) brightness(0.7);
@@ -122,7 +138,7 @@
         color: #eee;
       }
 
-      .dark-mode .weather-widget .material-symbols-outlined {
+      .dark-mode #weather-widget .material-symbols-outlined {
         color: #ccc;
       }
 
@@ -135,7 +151,7 @@
       }
 
       /* Light mode for weather widget */
-      .light-mode .weather-widget {
+      .light-mode #weather-widget {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(10px) brightness(1.1);
         -webkit-backdrop-filter: blur(10px) brightness(1.1);
@@ -143,7 +159,7 @@
         color: #222;
       }
 
-      .light-mode .weather-widget .material-symbols-outlined {
+      .light-mode #weather-widget .material-symbols-outlined {
         color: #474747 !important;
       }
 
@@ -1027,7 +1043,7 @@
         animation: spin-counterclockwise 0.6s ease;
       }
 
-      #widgets-container {
+      .widgets-container {
         margin-top: 350px;
         align-items: center;
         width: 580px;
@@ -1044,14 +1060,18 @@
         transition: opacity 0.4s ease, height 1s ease;
         opacity: 1;
       }
+      .widgets-container.vertical {
+        width: 260px;
+        height: 440px;
+      }
 
-      #widgets-container.hidden {
+      .widgets-container.hidden {
         opacity: 0;
         pointer-events: none; /* Prevent interaction when hidden */
         height: 0; /* Collapse height */
       }
 
-      .dark-mode #widgets-container {
+      .dark-mode .widgets-container {
         background-color: rgba(0, 0, 0, 0.3);
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(5px) brightness(0.7);
@@ -1059,7 +1079,7 @@
         color: #eee;
       }
 
-      .light-mode #widgets-container {
+      .light-mode .widgets-container {
         background-color: rgba(255, 255, 255, 0.6);
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px) brightness(1.2);
@@ -1099,7 +1119,9 @@
       <div id="suggestions"></div>
     </div>
 
-    <div id="widgets-container"></div>
+    <div class="widgets-container" id="widgets-container-bottom"></div>
+    <div class="widgets-container vertical" id="widgets-container-left"></div>
+    <div class="widgets-container vertical" id="widgets-container-right"></div>
 
     <div id="settings-container" class="no-select">
       <button id="settings-btn" class="no-select" title="Settings">
@@ -1375,7 +1397,16 @@
 
       const exportBtn = document.getElementById("export-settings");
       const importBtn = document.getElementById("import-settings");
-      const widgetsContainer = document.getElementById("widgets-container");
+      const widgetContainers = document.querySelectorAll("widgets-container");
+      const rightWidgetContainer = document.getElementById(
+        "widgets-container-right"
+      );
+      const leftWidgetContainer = document.getElementById(
+        "widgets-container-left"
+      );
+      const bottomWidgetContainer = document.getElementById(
+        "widgets-container-bottom"
+      );
       // #endregion
       //==================================================
 
@@ -1386,6 +1417,9 @@
       let themeSettingsVisible = false;
       let isClockwise = true;
       let typingTimer;
+      let hoveredElement = null;
+      let weatherWidgetLocation = "bottom";
+      let weatherWidget;
       const debounceDelay = 500;
       // #endregion
       //==================================================
@@ -1595,7 +1629,7 @@
           if (searchBarState === "open") {
             searchBar.parentElement.parentElement.classList.remove("open");
             searchBar.parentElement.parentElement.classList.add("close");
-            widgetsContainer.classList.remove("hidden");
+            bottomWidgetContainer.classList.remove("hidden");
             searchBarState = "closed";
           }
           return;
@@ -1604,7 +1638,7 @@
         if (searchBarState === "closed") {
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
-          widgetsContainer.classList.add("hidden");
+          bottomWidgetContainer.classList.add("hidden");
           searchBarState = "open";
         }
 
@@ -1618,7 +1652,7 @@
           fetchGoogleSuggestions(searchBar.value);
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
-          widgetsContainer.classList.add("hidden");
+          bottomWidgetContainer.classList.add("hidden");
           searchBarState = "open";
         }
       });
@@ -1631,7 +1665,7 @@
         ) {
           searchBar.parentElement.parentElement.classList.remove("open");
           searchBar.parentElement.parentElement.classList.add("close");
-          widgetsContainer.classList.remove("hidden");
+          bottomWidgetContainer.classList.remove("hidden");
           searchBarState = "closed";
           suggestionsBox.innerHTML = "";
         }
@@ -2035,8 +2069,36 @@
 
       async function loadWeather() {
         try {
-          const ipRes = await fetch("https://ipapi.co/json");
-          const ipData = await ipRes.json();
+          let ipData;
+          const cachedLocation = localStorage.getItem("cachedIPData");
+          const cacheTimestamp = localStorage.getItem("cachedIPDataTimestamp");
+
+          const isCacheValid =
+            cachedLocation &&
+            cacheTimestamp &&
+            Date.now() - parseInt(cacheTimestamp) < 24 * 60 * 60 * 1000; // 24 hours
+
+          if (isCacheValid) {
+            ipData = JSON.parse(cachedLocation);
+          } else {
+            try {
+              const ipRes = await fetch("https://ipapi.co/json");
+              ipData = await ipRes.json();
+              localStorage.setItem("cachedIPData", JSON.stringify(ipData));
+              localStorage.setItem(
+                "cachedIPDataTimestamp",
+                Date.now().toString()
+              );
+            } catch (e) {
+              // Fallback to Bridgeport, CT
+              ipData = {
+                latitude: 41.1792,
+                longitude: -73.1894,
+                city: "Bridgeport",
+              };
+            }
+          }
+
           const lat = ipData.latitude;
           const lon = ipData.longitude;
           const city = ipData.city;
@@ -2058,7 +2120,6 @@
             minute: "2-digit",
           });
 
-          // Tomorrow's forecast
           const tomorrow = weatherData.daily;
           const maxTempF = Math.round(
             (tomorrow.temperature_2m_max[1] * 9) / 5 + 32
@@ -2075,42 +2136,110 @@
           const precipitationSum = tomorrow.precipitation_sum[1];
           const forecastCondition =
             weatherDescriptions[tomorrow.weathercode[1]] || "Unknown";
+          let weatherWidgetContainer;
+          if (weatherWidgetLocation === "bottom") {
+            weatherWidgetContainer = bottomWidgetContainer;
+          } else if (weatherWidgetLocation === "left") {
+            weatherWidgetContainer = leftWidgetContainer;
+          } else if (weatherWidgetLocation === "right") {
+            weatherWidgetContainer = rightWidgetContainer;
+          } else {
+            weatherWidgetContainer = bottomWidgetContainer;
+          }
 
-          widgetsContainer.innerHTML = `
-      <div class="weather-widget">
-        <div class="today">
-          <div class="weather-main">
-            <span class="material-symbols-outlined" title="${condition}">thermostat</span>
-            <div class="weather-info">
-              <h2>${city}</h2>
-              <p class="temp">${tempF}°F</p>
-              <p class="desc">${condition}</p>
-              <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
-              <p class="detail">🕒 Updated: ${time}</p>
+          weatherWidgetContainer.innerHTML = `
+        <div id="weather-widget">
+          <div class="today">
+            <div class="weather-main">
+              <span class="material-symbols-outlined" title="${condition}">thermostat</span>
+              <div class="weather-info">
+                <h2>${city}</h2>
+                <p class="temp">${tempF}°F</p>
+                <p class="desc">${condition}</p>
+                <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
+                <p class="detail">🕒 Updated: ${time}</p>
+              </div>
+            </div>
+          </div>
+          <div class="tomorrow">
+            <div class="weather-main">
+              <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
+              <div class="weather-info">
+                <h2>Tomorrow</h2>
+                <p class="temp">${maxTempF}° / ${minTempF}°F</p>
+                <p class="desc">${forecastCondition}</p>
+                <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
+                <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="tomorrow">
-          <div class="weather-main">
-            <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
-            <div class="weather-info">
-              <h2>Tomorrow</h2>
-              <p class="temp">${maxTempF}° / ${minTempF}°F</p>
-              <p class="desc">${forecastCondition}</p>
-              <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
-              <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
+      `;
+
+          weatherWidget = document.querySelector("#weather-widget");
+          if (weatherWidget) {
+            if (
+              weatherWidgetLocation === "bottom" ||
+              weatherWidgetLocation === "top"
+            ) {
+              weatherWidget.classList.add("horizontal");
+            } else if (
+              weatherWidgetLocation === "left" ||
+              weatherWidgetLocation === "right"
+            ) {
+              weatherWidget.classList.add("vertical");
+              const style = getComputedStyle(weatherWidget);
+              const width = style.width;
+              const height = style.height;
+              weatherWidget.style.width = height;
+              weatherWidget.style.height = width;
+            } else {
+              weatherWidget.classList.remove("vertical", "horizontal");
+            }
+          }
+          document.addEventListener("mousedown", (e) => {
+            if (hoveringWeatherWidget && weatherWidget) {
+              const widgetRect = weatherWidget.getBoundingClientRect();
+              const offsetX = e.clientX - widgetRect.left;
+              const offsetY = e.clientY - widgetRect.top;
+
+              // Fix position before setting absolute
+              const startX = widgetRect.left + window.scrollX;
+              const startY = widgetRect.top + window.scrollY;
+
+              // Set fixed position to start the drag from same visual spot
+              weatherWidget.style.position = "absolute";
+              weatherWidget.style.tranfsform = "translate(-50%, -50%)";
+              weatherWidget.style.left = `${startX}px`;
+              weatherWidget.style.top = `${startY}px`;
+              weatherWidget.style.margin = "0";
+              weatherWidget.style.zIndex = "1000";
+              weatherWidget.style.cursor = "grabbing";
+
+              const onMouseMove = (e) => {
+                const x = e.clientX - offsetX + window.scrollX;
+                const y = e.clientY - offsetY + window.scrollY;
+                weatherWidget.style.left = `${x}px`;
+                weatherWidget.style.top = `${y}px`;
+              };
+
+              const onMouseUp = () => {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+                weatherWidget.style.cursor = "grab";
+              };
+
+              document.addEventListener("mousemove", onMouseMove);
+              document.addEventListener("mouseup", onMouseUp);
+            }
+          });
         } catch (err) {
           console.error("Weather load failed:", err);
-          widgetsContainer.innerHTML = `
-      <div class="weather-widget">
-        <p>Unable to load weather. Try again later.</p>
-      </div>
-    `;
+          weatherWidgetContainer.innerHTML = `
+        <div class="weather-widget">
+          <p>Unable to load weather. Try again later.</p>
+        </div>
+      `;
         }
       }
 
@@ -2121,7 +2250,39 @@
       loadWeather();
       setInterval(() => {
         loadWeather();
-      }, 60000);
+      }, 60000 * 60);
+      let hoveringWeatherWidget = false;
+
+      document.addEventListener("mouseover", (e) => {
+        if (weatherWidget) {
+          // Temporarily disable pointer events to detect what's behind
+          weatherWidget.style.pointerEvents = "none";
+        }
+
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+
+        // Check if hovered element is not just <body> or <html>
+        if (el && el !== document.body && el !== document.documentElement) {
+          hoveredElement = el;
+        } else {
+          hoveredElement = null;
+        }
+
+        if (weatherWidget) {
+          // Restore pointer events after detection
+          weatherWidget.style.pointerEvents = "auto";
+
+          // Now check if mouse is *actually* over the widget
+          const widgetRect = weatherWidget.getBoundingClientRect();
+          hoveringWeatherWidget =
+            e.clientX >= widgetRect.left &&
+            e.clientX <= widgetRect.right &&
+            e.clientY >= widgetRect.top &&
+            e.clientY <= widgetRect.bottom;
+        } else {
+          hoveringWeatherWidget = false;
+        }
+      });
     </script>
   </body>
 </html>
