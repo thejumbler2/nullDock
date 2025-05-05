@@ -1646,11 +1646,21 @@
 
       searchBar.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
-          window.open(
-            "https://www.google.com/search?q=" +
-              encodeURIComponent(searchBar.value),
-            "_blank"
-          );
+          const input = searchBar.value.trim();
+          const urlRegex = /^(https?:\/\/)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/;
+
+          if (urlRegex.test(input)) {
+            const search =
+              input.startsWith("http://") || input.startsWith("https://")
+                ? input
+                : "http://" + input;
+            window.open(search, "_blank");
+          } else {
+            window.open(
+              "https://www.google.com/search?q=" + encodeURIComponent(input),
+              "_blank"
+            );
+          }
         }
       });
 
@@ -1894,7 +1904,10 @@
 
         try {
           // Fetch the file content
-          const response = await fetch(fileUrl);
+          const response = await fetch(fileUrl, {
+            cache: "no-store", // forces fetch to bypass HTTP cache
+          });
+
           if (!response.ok) {
             throw new Error("Failed to fetch the file.");
           }
