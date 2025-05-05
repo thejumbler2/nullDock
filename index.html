@@ -16,7 +16,32 @@
   </head>
   <body id="body">
     <style>
-      .weather-widget {
+      .widgets-container:has(#weather-widget) {
+        opacity: 1 !important;
+      }
+      .widgets-container.drag-active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #widgets-container-right {
+        position: fixed;
+        top: -250px;
+        right: 0;
+      }
+      #widgets-container-left {
+        position: fixed;
+        top: -250px;
+        left: 0;
+      }
+      #weather-widget.vertical {
+        flex-direction: column !important; /* Stack vertically */
+        width: 85% !important; /* Adjust width for vertical layout */
+        height: 91.2% !important; /* Adjust height for vertical layout */
+      }
+      #weather-widget.horizontal {
+        flex-direction: row !important; /* Stack horizontally */
+      }
+      #weather-widget {
         display: flex;
         justify-content: space-between; /* Align today's and tomorrow's forecast horizontally */
         padding: 20px;
@@ -30,6 +55,10 @@
         height: 85%;
         font-family: "Segoe UI", sans-serif;
       }
+      #weather-widget .dragging {
+        height: 200px !important;
+        width: 600px !important;
+      }
 
       .weather-main {
         display: flex;
@@ -37,7 +66,7 @@
         gap: 16px;
       }
 
-      .weather-widget .material-symbols-outlined {
+      #weather-widget .material-symbols-outlined {
         font-size: 48px;
         color: #ccc;
         transition: transform 0.2s ease;
@@ -66,8 +95,8 @@
       }
 
       /* Both Today and Tomorrow need to be styled similarly */
-      .weather-widget .today,
-      .weather-widget .tomorrow {
+      #weather-widget .today,
+      #weather-widget .tomorrow {
         flex: 1; /* Both take up 50% of the space */
         display: flex;
         flex-direction: column;
@@ -75,46 +104,46 @@
       }
 
       /* Make both weather sections look like each other */
-      .weather-widget .today .weather-main,
-      .weather-widget .tomorrow .weather-main {
+      #weather-widget .today .weather-main,
+      #weather-widget .tomorrow .weather-main {
         display: flex;
         align-items: center;
         gap: 16px;
       }
 
-      .weather-widget .today .weather-info,
-      .weather-widget .tomorrow .weather-info {
+      #weather-widget .today .weather-info,
+      #weather-widget .tomorrow .weather-info {
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      .weather-widget .today .weather-info .temp,
-      .weather-widget .tomorrow .weather-info .temp {
+      #weather-widget .today .weather-info .temp,
+      #weather-widget .tomorrow .weather-info .temp {
         font-size: 2em;
         margin: 4px 0;
       }
 
-      .weather-widget .today .weather-info .desc,
-      .weather-widget .tomorrow .weather-info .desc {
+      #weather-widget .today .weather-info .desc,
+      #weather-widget .tomorrow .weather-info .desc {
         font-size: 1em;
         font-style: italic;
         color: #aaa;
       }
 
-      .weather-widget .today .weather-info .detail,
-      .weather-widget .tomorrow .weather-info .detail {
+      #weather-widget .today .weather-info .detail,
+      #weather-widget .tomorrow .weather-info .detail {
         font-size: 0.9em;
         color: #888;
       }
 
       /* Styling for tomorrow's section to ensure it mirrors today's */
-      .weather-widget .tomorrow {
+      #weather-widget.horizontal .tomorrow {
         margin-left: 20px; /* Add space between today's and tomorrow's forecast */
       }
 
       /* Dark mode styles */
-      .dark-mode .weather-widget {
+      .dark-mode #weather-widget {
         background: rgba(25, 25, 25, 0.7);
         backdrop-filter: blur(10px) brightness(0.7);
         -webkit-backdrop-filter: blur(10px) brightness(0.7);
@@ -122,7 +151,7 @@
         color: #eee;
       }
 
-      .dark-mode .weather-widget .material-symbols-outlined {
+      .dark-mode #weather-widget .material-symbols-outlined {
         color: #ccc;
       }
 
@@ -135,7 +164,7 @@
       }
 
       /* Light mode for weather widget */
-      .light-mode .weather-widget {
+      .light-mode #weather-widget {
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(10px) brightness(1.1);
         -webkit-backdrop-filter: blur(10px) brightness(1.1);
@@ -143,7 +172,7 @@
         color: #222;
       }
 
-      .light-mode .weather-widget .material-symbols-outlined {
+      .light-mode #weather-widget .material-symbols-outlined {
         color: #474747 !important;
       }
 
@@ -1027,7 +1056,7 @@
         animation: spin-counterclockwise 0.6s ease;
       }
 
-      #widgets-container {
+      .widgets-container {
         margin-top: 350px;
         align-items: center;
         width: 580px;
@@ -1042,16 +1071,21 @@
         font-size: 16px;
         position: fixed;
         transition: opacity 0.4s ease, height 1s ease;
-        opacity: 1;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .widgets-container.vertical {
+        width: 260px;
+        height: 440px;
       }
 
-      #widgets-container.hidden {
+      .widgets-container.hidden {
         opacity: 0;
         pointer-events: none; /* Prevent interaction when hidden */
         height: 0; /* Collapse height */
       }
 
-      .dark-mode #widgets-container {
+      .dark-mode .widgets-container {
         background-color: rgba(0, 0, 0, 0.3);
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8);
         backdrop-filter: blur(5px) brightness(0.7);
@@ -1059,7 +1093,7 @@
         color: #eee;
       }
 
-      .light-mode #widgets-container {
+      .light-mode .widgets-container {
         background-color: rgba(255, 255, 255, 0.6);
         box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px) brightness(1.2);
@@ -1078,79 +1112,100 @@
       id="logo"
       src="https://i.ibb.co/60G9C31m/New-Projecmt.png"
       alt="Logo"
+      class="no-select"
     />
-    <div id="search-bar-container">
-      <div id="inputs">
-        <span class="material-symbols-outlined" id="search-icon">search</span>
+
+    <div id="search-bar-container" class="no-select">
+      <div id="inputs" class="no-select">
+        <span class="material-symbols-outlined no-select" id="search-icon"
+          >search</span
+        >
         <input type="text" id="search-bar" placeholder="Search..." />
         <span
-          class="material-symbols-outlined"
+          class="material-symbols-outlined no-select"
           id="microphone-icon"
           title="Voice Search"
           >mic</span
         >
         <span
-          class="material-symbols-outlined"
+          class="material-symbols-outlined no-select"
           id="camera-icon"
           title="Image Search"
           >camera_alt</span
         >
       </div>
-      <div id="suggestions"></div>
+      <div id="suggestions" class="no-select"></div>
     </div>
 
-    <div id="widgets-container"></div>
+    <div
+      class="widgets-container no-select"
+      id="widgets-container-bottom"
+    ></div>
+    <div
+      class="widgets-container vertical no-select"
+      id="widgets-container-left"
+    ></div>
+    <div
+      class="widgets-container vertical no-select"
+      id="widgets-container-right"
+    ></div>
 
     <div id="settings-container" class="no-select">
       <button id="settings-btn" class="no-select" title="Settings">
-        <span class="material-symbols-outlined" id="settings-icon"
+        <span class="material-symbols-outlined no-select" id="settings-icon"
           >settings</span
         >
       </button>
-      <div id="settings-dropdown">
+      <div id="settings-dropdown" class="no-select">
         <button class="no-select setting" id="theme" title="Theme Settings">
-          <span class="material-symbols-outlined">palette</span> Theme settings
+          <span class="material-symbols-outlined no-select">palette</span> Theme
+          settings
         </button>
         <button
           class="no-select setting"
           id="export-settings"
           title="Theme Settings"
         >
-          <span class="material-symbols-outlined">download</span> Export
-          settings
+          <span class="material-symbols-outlined no-select">download</span>
+          Export settings
         </button>
         <button
           class="no-select setting"
           id="import-settings"
           title="Theme Settings"
         >
-          <span class="material-symbols-outlined">upload</span> Import settings
+          <span class="material-symbols-outlined no-select">upload</span> Import
+          settings
         </button>
       </div>
     </div>
+
     <div id="save-container" class="no-select">
       <button id="save-btn" class="no-select" title="Save Newest HTML">
-        <span class="material-symbols-outlined" id="save-icon">save</span>
+        <span class="material-symbols-outlined no-select" id="save-icon"
+          >save</span
+        >
       </button>
     </div>
-    <div id="image-modal" class="modal hidden">
-      <div class="modal-content">
+
+    <div id="image-modal" class="modal hidden no-select">
+      <div class="modal-content no-select">
         <input
           id="image-url-input"
           type="text"
           placeholder="Paste image URL here..."
         />
-        <button id="image-url-submit">Search</button>
+        <button id="image-url-submit" class="no-select">Search</button>
       </div>
     </div>
 
-    <div id="theme-settings-container">
-      <h1 id="theme-settings-title">Theme Settings</h1>
+    <div id="theme-settings-container" class="no-select">
+      <h1 id="theme-settings-title" class="no-select">Theme Settings</h1>
       <button id="close-theme-settings" class="no-select">X</button>
 
-      <div id="theme-settings">
-        <div id="background-settings">
-          <h2 id="current-background-text"></h2>
+      <div id="theme-settings" class="no-select">
+        <div id="background-settings" class="no-select">
+          <h2 id="current-background-text" class="no-select"></h2>
           <img
             id="background-preview"
             src=""
@@ -1173,27 +1228,32 @@
             Reset Background
           </button>
 
-          <div id="theme-buttons-container">
+          <div id="theme-buttons-container" class="no-select">
             <button id="light-mode-button" class="no-select"></button>
             <button id="dark-mode-button" class="no-select"></button>
             <button id="material-mode-button" class="no-select">M</button>
           </div>
         </div>
-        <hr class="fancy-break" />
+        <hr class="fancy-break no-select" />
       </div>
     </div>
 
-    <div id="background-preview-modal" class="modal hidden">
-      <div class="modal-content">
-        <h2>Preview Background</h2>
+    <div id="background-preview-modal" class="modal hidden no-select">
+      <div class="modal-content no-select">
+        <h2 class="no-select">Preview Background</h2>
         <img
           id="background-preview-modal-image"
           src=""
           alt="Background Preview"
+          class="no-select"
         />
-        <div class="modal-buttons">
-          <button id="confirm-background-button">Confirm</button>
-          <button id="cancel-background-button">Cancel</button>
+        <div class="modal-buttons no-select">
+          <button id="confirm-background-button" class="no-select">
+            Confirm
+          </button>
+          <button id="cancel-background-button" class="no-select">
+            Cancel
+          </button>
         </div>
       </div>
     </div>
@@ -1375,7 +1435,16 @@
 
       const exportBtn = document.getElementById("export-settings");
       const importBtn = document.getElementById("import-settings");
-      const widgetsContainer = document.getElementById("widgets-container");
+      const widgetContainers = document.querySelectorAll("widgets-container");
+      const rightWidgetContainer = document.getElementById(
+        "widgets-container-right"
+      );
+      const leftWidgetContainer = document.getElementById(
+        "widgets-container-left"
+      );
+      const bottomWidgetContainer = document.getElementById(
+        "widgets-container-bottom"
+      );
       // #endregion
       //==================================================
 
@@ -1386,6 +1455,11 @@
       let themeSettingsVisible = false;
       let isClockwise = true;
       let typingTimer;
+      let hoveredElement = null;
+      let weatherWidgetLocation = localStorage.getItem(
+        "weatherWidgetLocation"
+      ) || "bottom";
+      let weatherWidget;
       const debounceDelay = 500;
       // #endregion
       //==================================================
@@ -1595,7 +1669,7 @@
           if (searchBarState === "open") {
             searchBar.parentElement.parentElement.classList.remove("open");
             searchBar.parentElement.parentElement.classList.add("close");
-            widgetsContainer.classList.remove("hidden");
+            bottomWidgetContainer.classList.remove("hidden");
             searchBarState = "closed";
           }
           return;
@@ -1604,7 +1678,7 @@
         if (searchBarState === "closed") {
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
-          widgetsContainer.classList.add("hidden");
+          bottomWidgetContainer.classList.add("hidden");
           searchBarState = "open";
         }
 
@@ -1618,7 +1692,7 @@
           fetchGoogleSuggestions(searchBar.value);
           searchBar.parentElement.parentElement.classList.remove("close");
           searchBar.parentElement.parentElement.classList.add("open");
-          widgetsContainer.classList.add("hidden");
+          bottomWidgetContainer.classList.add("hidden");
           searchBarState = "open";
         }
       });
@@ -1631,7 +1705,7 @@
         ) {
           searchBar.parentElement.parentElement.classList.remove("open");
           searchBar.parentElement.parentElement.classList.add("close");
-          widgetsContainer.classList.remove("hidden");
+          bottomWidgetContainer.classList.remove("hidden");
           searchBarState = "closed";
           suggestionsBox.innerHTML = "";
         }
@@ -2035,8 +2109,35 @@
 
       async function loadWeather() {
         try {
-          const ipRes = await fetch("https://ipapi.co/json");
-          const ipData = await ipRes.json();
+          let ipData;
+          const cachedLocation = localStorage.getItem("cachedIPData");
+          const cacheTimestamp = localStorage.getItem("cachedIPDataTimestamp");
+
+          const isCacheValid =
+            cachedLocation &&
+            cacheTimestamp &&
+            Date.now() - parseInt(cacheTimestamp) < 24 * 60 * 60 * 1000;
+
+          if (isCacheValid) {
+            ipData = JSON.parse(cachedLocation);
+          } else {
+            try {
+              const ipRes = await fetch("https://ipapi.co/json");
+              ipData = await ipRes.json();
+              localStorage.setItem("cachedIPData", JSON.stringify(ipData));
+              localStorage.setItem(
+                "cachedIPDataTimestamp",
+                Date.now().toString()
+              );
+            } catch (e) {
+              ipData = {
+                latitude: 41.1792,
+                longitude: -73.1894,
+                city: "Bridgeport",
+              };
+            }
+          }
+
           const lat = ipData.latitude;
           const lon = ipData.longitude;
           const city = ipData.city;
@@ -2058,7 +2159,6 @@
             minute: "2-digit",
           });
 
-          // Tomorrow's forecast
           const tomorrow = weatherData.daily;
           const maxTempF = Math.round(
             (tomorrow.temperature_2m_max[1] * 9) / 5 + 32
@@ -2076,8 +2176,22 @@
           const forecastCondition =
             weatherDescriptions[tomorrow.weathercode[1]] || "Unknown";
 
-          widgetsContainer.innerHTML = `
-      <div class="weather-widget">
+          let weatherWidgetContainer;
+          let factor =
+            localStorage.getItem("weatherWidgetLocation") ||
+            weatherWidgetLocation;
+          if (factor === "bottom") {
+            weatherWidgetContainer = bottomWidgetContainer;
+          } else if (factor === "left") {
+            weatherWidgetContainer = leftWidgetContainer;
+          } else if (factor === "right") {
+            weatherWidgetContainer = rightWidgetContainer;
+          } else {
+            weatherWidgetContainer = bottomWidgetContainer;
+          }
+
+          weatherWidgetContainer.innerHTML = `
+      <div id="weather-widget">
         <div class="today">
           <div class="weather-main">
             <span class="material-symbols-outlined" title="${condition}">thermostat</span>
@@ -2104,9 +2218,31 @@
         </div>
       </div>
     `;
+
+          weatherWidget = document.querySelector("#weather-widget");
+          if (weatherWidget) {
+            if (
+              weatherWidgetLocation === "bottom" ||
+              weatherWidgetLocation === "top"
+            ) {
+              weatherWidget.classList.add("horizontal");
+            } else if (
+              weatherWidgetLocation === "left" ||
+              weatherWidgetLocation === "right"
+            ) {
+              weatherWidget.classList.add("vertical");
+              const style = getComputedStyle(weatherWidget);
+              const width = style.width;
+              const height = style.height;
+              weatherWidget.style.width = height;
+              weatherWidget.style.height = width;
+            } else {
+              weatherWidget.classList.remove("vertical", "horizontal");
+            }
+          }
         } catch (err) {
           console.error("Weather load failed:", err);
-          widgetsContainer.innerHTML = `
+          weatherWidgetContainer.innerHTML = `
       <div class="weather-widget">
         <p>Unable to load weather. Try again later.</p>
       </div>
@@ -2121,7 +2257,165 @@
       loadWeather();
       setInterval(() => {
         loadWeather();
-      }, 60000);
+      }, 60000 * 60);
+      let hoveringWeatherWidget = false;
+
+      document.addEventListener("mouseover", (e) => {
+        if (weatherWidget) {
+          // Temporarily disable pointer events to detect what's behind
+          weatherWidget.style.pointerEvents = "none";
+        }
+
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+
+        // Check if hovered element is not just <body> or <html>
+        if (el && el !== document.body && el !== document.documentElement) {
+          hoveredElement = el;
+        } else {
+          hoveredElement = null;
+        }
+
+        if (weatherWidget) {
+          // Restore pointer events after detection
+          weatherWidget.style.pointerEvents = "auto";
+
+          // Now check if mouse is *actually* over the widget
+          const widgetRect = weatherWidget.getBoundingClientRect();
+          hoveringWeatherWidget =
+            e.clientX >= widgetRect.left &&
+            e.clientX <= widgetRect.right &&
+            e.clientY >= widgetRect.top &&
+            e.clientY <= widgetRect.bottom;
+        } else {
+          hoveringWeatherWidget = false;
+        }
+      });
+
+      // Move these outside the loadWeather function to avoid recreating them
+      let dragPreview = null;
+      const onMouseMove = (e) => {
+        if (dragPreview) {
+          dragPreview.style.left = `${e.clientX + 10}px`;
+          dragPreview.style.top = `${e.clientY + 10}px`;
+        }
+        [
+          leftWidgetContainer,
+          rightWidgetContainer,
+          bottomWidgetContainer,
+        ].forEach((container) => {
+          container.classList.add("drag-active");
+        });
+      };
+
+      async function onMouseUp() {
+        if (dragPreview) {
+          dragPreview.remove();
+          dragPreview = null;
+        }
+        [
+          leftWidgetContainer,
+          rightWidgetContainer,
+          bottomWidgetContainer,
+        ].forEach((container) => {
+          container.classList.remove("drag-active");
+        });
+
+        if (weatherWidget) {
+          weatherWidget.style.outline = "";
+        }
+
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+
+        if (hoveredElement && weatherWidget) {
+          weatherWidget.remove();
+
+          if (hoveredElement.id === "widgets-container-left") {
+            weatherWidgetLocation = "left";
+          } else if (hoveredElement.id === "widgets-container-right") {
+            weatherWidgetLocation = "right";
+          } else if (hoveredElement.id === "widgets-container-bottom") {
+            weatherWidgetLocation = "bottom";
+          }
+          localStorage.setItem("weatherWidgetLocation", weatherWidgetLocation);
+
+          await loadWeather();
+        } else {
+          await loadWeather();
+        }
+      }
+
+      // Replace the event listener setup in loadWeather() with this:
+      document.addEventListener(
+        "mousedown",
+        (e) => {
+          if (hoveringWeatherWidget && weatherWidget) {
+            // Remove any existing previews
+            document
+              .querySelectorAll(".drag-preview")
+              .forEach((el) => el.remove());
+
+            // Create visual ghost
+            dragPreview = document.createElement("div");
+            dragPreview.classList.add("drag-preview");
+            dragPreview.innerHTML = weatherWidget.innerHTML;
+            document.body.appendChild(dragPreview);
+
+            Object.assign(dragPreview.style, {
+              position: "fixed",
+              pointerEvents: "none",
+              zIndex: "1001",
+              opacity: "0.8",
+              transform: "scale(0.9)",
+              background: weatherWidget.style.background,
+              color: weatherWidget.style.color,
+              borderRadius: "12px",
+              padding: "10px",
+              width: weatherWidget.offsetWidth / 4 + "px",
+              height: weatherWidget.offsetHeight / 4 + "px",
+              fontSize:
+                parseFloat(getComputedStyle(weatherWidget).fontSize) / 4 + "px",
+              overflow: "hidden",
+              left: `${e.clientX + 10}px`,
+              top: `${e.clientY + 10}px`,
+              flexDirection: weatherWidget.classList.contains("horizontal")
+                ? "row"
+                : "column",
+              display: "flex",
+            });
+            icons = dragPreview.querySelectorAll(
+              ".material-symbols-outlined, .material-icons"
+            );
+            icons.forEach((icon) => {
+              icon.style.fontSize =
+                parseFloat(
+                  getComputedStyle(
+                    weatherWidget.querySelector(".material-symbols-outlined")
+                  ).fontSize
+                ) /
+                  4 +
+                "px";
+
+              icon.style.marginRight =
+                parseFloat(
+                  getComputedStyle(
+                    weatherWidget.querySelector(".material-symbols-outlined")
+                  ).marginRight
+                ) /
+                  4 +
+                "px";
+            });
+
+            // Highlight the real widget
+            weatherWidget.style.outline = "2px dashed #2196f3";
+            weatherWidget.style.outlineOffset = "4px";
+
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+          }
+        },
+        { capture: true }
+      ); // Add capture phase to ensure single event handling
     </script>
   </body>
 </html>
