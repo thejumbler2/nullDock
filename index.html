@@ -1262,13 +1262,10 @@
 
     <script>
       if (location.hash === "#new") {
-        // Remove the hash to prevent looping if reloaded
         const cleanUrl = location.href.replace(/#new$/, "");
 
-        // Open the same page in a new tab, without the #new
         window.open(cleanUrl, "_blank");
 
-        // Go back to previous page in history
         history.back();
       } else {
         let hasWifi = false;
@@ -1288,7 +1285,6 @@
                 : "No internet connection, cannot update now"
             );
           } else {
-            // Fallback: assume true if online but no network info
             hasWifi = navigator.onLine;
             saveBtn.querySelector("span").textContent = hasWifi
               ? "save"
@@ -1303,15 +1299,12 @@
           console.log("hasWifi:", hasWifi);
         }
 
-        // Update when connection type changes
         if ("connection" in navigator) {
           navigator.connection.addEventListener(
             "change",
             updateConnectionStatus
           );
         }
-
-        // Update when online/offline status changes
         window.addEventListener("online", updateConnectionStatus);
         window.addEventListener("offline", updateConnectionStatus);
 
@@ -1933,22 +1926,19 @@
         // #endregion
         //==================================================
 
-        // Get Light/Dark Mode Buttons
         const lightModeButton = document.getElementById("light-mode-button");
         const darkModeButton = document.getElementById("dark-mode-button");
         const materialModeButton = document.getElementById(
           "material-mode-button"
         );
 
-        // Apply Saved Theme on Load
         const savedTheme = localStorage.getItem("theme");
         if (savedTheme) {
           document.body.classList.add(savedTheme);
           updateSelectedMode(savedTheme);
-          checkUIMode(); // Ensure the UI mode is properly updated
+          checkUIMode();
         }
 
-        // Light Mode Button Click Event
         lightModeButton.addEventListener("click", () => {
           document.body.classList.remove("dark-mode");
           document.body.classList.add("light-mode");
@@ -1956,7 +1946,6 @@
           updateSelectedMode("light-mode");
         });
 
-        // Dark Mode Button Click Event
         darkModeButton.addEventListener("click", () => {
           document.body.classList.remove("light-mode");
           document.body.classList.add("dark-mode");
@@ -1970,7 +1959,6 @@
           updateSelectedMode("material-mode");
         });
 
-        // Update Selected Mode
         function updateSelectedMode(mode) {
           if (mode === "light-mode") {
             lightModeButton.classList.add("selected");
@@ -1989,50 +1977,22 @@
         const saveBtn = document.getElementById("save-btn");
         const saveIcon = document.getElementById("save-icon");
 
-        saveBtn.addEventListener("click", async () => {
+        saveBtn.addEventListener("click", () => {
           const fileUrl =
-            "https://cdn.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html";
-          const purgeUrl = `https://purge.jsdelivr.net/gh/thejumbler2/nullDock@latest/index.html`;
-          const defaultFileName = "index.html";
+            "https://drive.google.com/uc?export=download&id=148ANUX1UuXzcGq5GIzJlO3xtYk0UuRVM";
 
-          const fileName = prompt(
-            "Enter the file name to save:",
-            defaultFileName
-          );
-          if (!fileName) return;
+          const downloadWindow = window.open(fileUrl, "_blank");
 
-          try {
-            // Purge the CDN cache
-            await fetch(purgeUrl, { method: "GET" });
-
-            // Wait a moment to ensure purge takes effect (optional but safer)
-            await new Promise((resolve) => setTimeout(resolve, 500));
-
-            // Fetch the latest file content
-            const response = await fetch(fileUrl, { cache: "no-store" });
-
-            if (!response.ok) {
-              throw new Error("Failed to fetch the file.");
-            }
-
-            const fileContent = await response.text();
-
-            // Create a blob and trigger download
-            const blob = new Blob([fileContent], { type: "text/html" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = fileName;
-            link.click();
-
-            // Clean up
-            URL.revokeObjectURL(link.href);
-          } catch (error) {
-            console.error("Error saving the file:", error);
-            alert("Failed to save the file. Check the console for details.");
+          if (downloadWindow) {
+            setTimeout(() => {
+              downloadWindow.close();
+            }, 3000);
+          } else {
+            alert(
+              "Failed to open the download link. Please check your browser's popup settings."
+            );
           }
         });
-
-        // Initial check
         updateConnectionStatus();
 
         // ==================================================
@@ -2296,13 +2256,11 @@
 
         document.addEventListener("mouseover", (e) => {
           if (weatherWidget) {
-            // Temporarily disable pointer events to detect what's behind
             weatherWidget.style.pointerEvents = "none";
           }
 
           const el = document.elementFromPoint(e.clientX, e.clientY);
 
-          // Check if hovered element is not just <body> or <html>
           if (el && el !== document.body && el !== document.documentElement) {
             hoveredElement = el;
           } else {
@@ -2310,10 +2268,8 @@
           }
 
           if (weatherWidget) {
-            // Restore pointer events after detection
             weatherWidget.style.pointerEvents = "auto";
 
-            // Now check if mouse is *actually* over the widget
             const widgetRect = weatherWidget.getBoundingClientRect();
             hoveringWeatherWidget =
               e.clientX >= widgetRect.left &&
@@ -2325,7 +2281,6 @@
           }
         });
 
-        // Move these outside the loadWeather function to avoid recreating them
         let dragPreview = null;
         const onMouseMove = (e) => {
           if (dragPreview) {
@@ -2396,17 +2351,13 @@
           }
         }
 
-        // Replace the event listener setup in loadWeather() with this:
         document.addEventListener(
           "mousedown",
           (e) => {
             if (hoveringWeatherWidget && weatherWidget) {
-              // Remove any existing previews
               document
                 .querySelectorAll(".drag-preview")
                 .forEach((el) => el.remove());
-
-              // Create visual ghost
               dragPreview = document.createElement("div");
               dragPreview.classList.add("drag-preview");
               dragPreview.innerHTML = weatherWidget.innerHTML;
@@ -2460,7 +2411,6 @@
                   "px";
               });
 
-              // Highlight the real widget
               weatherWidget.style.outline = "2px dashed #2196f3";
               weatherWidget.style.outlineOffset = "4px";
 
@@ -2469,7 +2419,7 @@
             }
           },
           { capture: true }
-        ); // Add capture phase to ensure single event handling
+        );
       }
     </script>
   </body>
