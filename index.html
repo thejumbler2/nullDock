@@ -1066,71 +1066,6 @@
         -webkit-backdrop-filter: blur(5px) brightness(1.2);
         color: #222;
       }
-
-      /* Weather Widget Toggle Styles */
-      .theme-setting {
-        display: flex;
-        align-items: center;
-        margin: 1rem 0;
-      }
-
-      .theme-setting-label {
-        display: flex;
-        align-items: center;
-        font-size: 1rem;
-        color: var(--text-color);
-      }
-
-      .theme-setting-toggle {
-        display: none;
-      }
-
-      .theme-setting-slider {
-        margin-left: 0.5rem;
-        width: 2rem;
-        height: 1rem;
-        background-color: var(--toggle-bg);
-        border-radius: 1rem;
-        position: relative;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-      }
-
-      .theme-setting-slider::before {
-        content: "";
-        position: absolute;
-        top: 0.1rem;
-        left: 0.1rem;
-        width: 0.8rem;
-        height: 0.8rem;
-        background-color: var(--toggle-knob);
-        border-radius: 50%;
-        transition: transform 0.3s ease;
-      }
-
-      .theme-setting-toggle:checked + .theme-setting-slider {
-        background-color: var(--toggle-bg-active);
-      }
-
-      .theme-setting-toggle:checked + .theme-setting-slider::before {
-        transform: translateX(1rem);
-      }
-
-      /* Light Theme Variables */
-      :root {
-        --text-color: #333;
-        --toggle-bg: #ccc;
-        --toggle-bg-active: #4caf50;
-        --toggle-knob: #fff;
-      }
-
-      /* Dark Theme Variables */
-      :root.dark-theme {
-        --text-color: #ddd;
-        --toggle-bg: #555;
-        --toggle-bg-active: #81c784;
-        --toggle-knob: #000;
-      }
     </style>
     <img
       id="full-background-image"
@@ -1245,22 +1180,6 @@
           </div>
         </div>
         <hr class="fancy-break" />
-        <!-- Fancy Break -->
-        <div class="fancy-break"></div>
-
-        <!-- Weather Widget Toggle -->
-        <div class="theme-setting">
-          <label for="weather-widget-toggle" class="theme-setting-label">
-            <span>Show Weather Widget</span>
-            <input
-              type="checkbox"
-              id="weather-widget-toggle"
-              class="theme-setting-toggle"
-              checked
-            />
-            <span class="theme-setting-slider"></span>
-          </label>
-        </div>
       </div>
     </div>
 
@@ -2203,30 +2122,6 @@
       setInterval(() => {
         loadWeather();
       }, 60000);
-
-      // Weather Widget Toggle Logic
-      document.addEventListener("DOMContentLoaded", () => {
-        const weatherWidgetToggle = document.getElementById(
-          "weather-widget-toggle"
-        );
-        const weatherWidget = document.querySelector(".weather-widget"); // Adjust selector as needed
-
-        // Initialize toggle state
-        weatherWidgetToggle.checked =
-          localStorage.getItem("weatherWidgetEnabled") !== "false";
-
-        // Toggle weather widget visibility
-        weatherWidget.style.display = weatherWidgetToggle.checked
-          ? "block"
-          : "none";
-
-        // Add event listener for toggle
-        weatherWidgetToggle.addEventListener("change", () => {
-          const isEnabled = weatherWidgetToggle.checked;
-          weatherWidget.style.display = isEnabled ? "block" : "none";
-          localStorage.setItem("weatherWidgetEnabled", isEnabled);
-        });
-      });
     </script>
   </body>
 </html>
