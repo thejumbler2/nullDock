@@ -13,6 +13,7 @@
       href="https://i.ibb.co/60G9C31m/New-Projecmt.png"
       type="image/x-icon"
     />
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
   </head>
   <body id="body">
     <style>
@@ -1622,6 +1623,11 @@
               `${containerWidth + 20}px`,
               "important"
             );
+            rightWidgetContainer.style.setProperty(
+              "right",
+              `${containerWidth}px`,
+              "important"
+            );
             saveContainer.style.setProperty(
               "right",
               `${containerWidth + 20}px`,
@@ -1643,6 +1649,7 @@
               `${document.body.clientHeight / 4}px`,
               "important"
             );
+            rightWidgetContainer.style.setProperty("right", `0px`, "important");
 
             settingsContainer.style.setProperty("right", "20px", "important");
             saveContainer.style.setProperty("right", "20px", "important");
@@ -2002,9 +2009,13 @@
           const backgroundImage = localStorage.getItem(
             "config_backgroundImage"
           );
+          const weatherWidgetLocation = localStorage.getItem(
+            "weatherWidgetLocation"
+          );
           const settings = {
             theme,
             backgroundImage,
+            weatherWidgetLocation,
           };
           const blob = new Blob([JSON.stringify(settings)], {
             type: "application/json",
@@ -2031,6 +2042,10 @@
                   localStorage.setItem(
                     "config_backgroundImage",
                     settings.backgroundImage
+                  );
+                  localStorage.setItem(
+                    "weatherWidgetLocation",
+                    settings.weatherWidgetLocation
                   );
                   location.reload();
                 } catch (error) {
@@ -2354,7 +2369,11 @@
         document.addEventListener(
           "mousedown",
           (e) => {
-            if (hoveringWeatherWidget && weatherWidget) {
+            if (
+              hoveringWeatherWidget &&
+              weatherWidget &&
+              themeSettingsVisible
+            ) {
               document
                 .querySelectorAll(".drag-preview")
                 .forEach((el) => el.remove());
@@ -2420,6 +2439,140 @@
           },
           { capture: true }
         );
+        // Variables to store the cube and its state
+        let cube = null;
+        let isDragging = false;
+        let offsetX, offsetY;
+        let velocityX = 0,
+          velocityY = 0;
+        let gravity = 0.2; // Gravity constant
+        let friction = 0.99; // Friction to simulate bounce damping
+
+        // Function to create the cube when "dumbasarock" is typed
+        function createCube(x, y) {
+          // Create cube element
+          cube = document.createElement("div");
+          cube.innerHTML = ":3";
+          cube.style.position = "absolute";
+          cube.style.left = `${x - 50}px`; // Center the cube
+          cube.style.top = `${y - 50}px`; // Center the cube
+          cube.style.width = "100px";
+          cube.style.height = "100px";
+          cube.style.backgroundColor = "gray";
+          cube.style.border = "5px solid #333";
+          cube.style.borderRadius = "20px";
+          cube.style.color = "white";
+          cube.style.fontSize = "30px";
+          cube.style.display = "flex";
+          cube.style.justifyContent = "center";
+          cube.style.alignItems = "center";
+          cube.style.textAlign = "center";
+          cube.style.cursor = "grab";
+          document.body.appendChild(cube);
+
+          // Add blush effect (animated)
+          cube.style.boxShadow = "0 0 15px rgba(255, 110, 110, 0.6)";
+          setInterval(() => {
+            cube.style.boxShadow =
+              cube.style.boxShadow === "0 0 15px rgba(255, 110, 110, 0.6)"
+                ? "0 0 15px rgba(255, 110, 110, 0.3)"
+                : "0 0 15px rgba(255, 110, 110, 0.6)";
+          }, 1000);
+
+          // Add drag events
+          cube.addEventListener("mousedown", (e) => {
+            isDragging = true;
+            offsetX = e.clientX - cube.offsetLeft;
+            offsetY = e.clientY - cube.offsetTop;
+            cube.style.cursor = "grabbing";
+
+            // Disable physics while dragging
+            velocityX = 0;
+            velocityY = 0;
+          });
+
+          document.addEventListener("mousemove", (e) => {
+            if (isDragging) {
+              let newLeft = e.clientX - offsetX;
+              let newTop = e.clientY - offsetY;
+
+              // Update position while dragging, no boundary check here
+              cube.style.left = `${newLeft}px`;
+              cube.style.top = `${newTop}px`;
+            }
+          });
+
+          document.addEventListener("mouseup", () => {
+            if (isDragging) {
+              isDragging = false;
+              cube.style.cursor = "grab";
+
+              // Constrain cube position when released, ensuring it stays within the window
+              let newLeft = parseFloat(cube.style.left);
+              let newTop = parseFloat(cube.style.top);
+
+              // Prevent the cube from going off screen after releasing
+              newLeft = Math.max(0, Math.min(window.innerWidth - 100, newLeft));
+              newTop = Math.max(0, Math.min(window.innerHeight - 100, newTop));
+
+              cube.style.left = `${newLeft}px`;
+              cube.style.top = `${newTop}px`;
+
+              // Re-enable physics after drag ends
+              velocityX = (newLeft - window.innerWidth / 2) * 0.1;
+              velocityY = (newTop - window.innerHeight / 2) * 0.1;
+            }
+          });
+        }
+
+        // Function to simulate gravity and physics for the cube
+        function animate() {
+          if (cube && !isDragging) {
+            // Apply gravity to the cube
+            velocityY += gravity;
+
+            // Apply friction to slow down horizontal movement
+            velocityX *= friction;
+            velocityY *= friction;
+
+            let left = parseFloat(cube.style.left);
+            let top = parseFloat(cube.style.top);
+
+            left += velocityX;
+            top += velocityY;
+
+            // Simple floor collision check
+            if (top > window.innerHeight - 110) {
+              // 100 is the height of the cube
+              top = window.innerHeight - 110;
+              velocityY = -velocityY * 0.8; // Bounce with reduced speed
+            }
+
+            // Wall collisions
+            if (left < 0 || left > window.innerWidth - 100) {
+              velocityX = -velocityX * 0.8; // Reverse and bounce off walls
+            }
+
+            // Update position
+            cube.style.left = `${left}px`;
+            cube.style.top = `${top}px`;
+          }
+
+          requestAnimationFrame(animate);
+        }
+
+        // Listen for user typing "dumbasarock"
+        let userInput = "";
+        document.addEventListener("keydown", (event) => {
+          userInput += event.key;
+          if (userInput.toLowerCase().includes("dumbasarock")) {
+            createCube(window.innerWidth / 2, window.innerHeight / 2);
+            userInput = ""; // Reset input after spawning cube
+          }
+        });
+
+        // Start animation loop
+        animate();
       }
     </script>
   </body>
