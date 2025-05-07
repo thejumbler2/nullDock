@@ -19,6 +19,7 @@
     <style>
       .widgets-container:has(#weather-widget) {
         opacity: 1 !important;
+        overflow: hidden;
       }
       .widgets-container.drag-active {
         opacity: 1;
@@ -1071,7 +1072,7 @@
         -webkit-backdrop-filter: blur(5px) brightness(0.7);
         font-size: 16px;
         position: fixed;
-        transition: opacity 0.4s ease, height 1s ease;
+        transition: opacity 0.4s ease, height 1s ease, padding 1s ease;
         opacity: 0;
         pointer-events: none;
       }
@@ -1084,6 +1085,14 @@
         opacity: 0;
         pointer-events: none; /* Prevent interaction when hidden */
         height: 0; /* Collapse height */
+      }
+      .hidden {
+        opacity: 0;
+        pointer-events: none; /* Prevent interaction when hidden */
+        padding: 0 !important;
+      }
+      :not(.hidden) {
+        pointer-events: all;
       }
 
       .dark-mode .widgets-container {
@@ -1260,6 +1269,7 @@
     </div>
 
     <input type="file" id="fileInput" style="display: none" />
+    <script src="https://unpkg.com/compromise"></script>
 
     <script>
       if (location.hash === "#new") {
@@ -1628,6 +1638,7 @@
               `${containerWidth}px`,
               "important"
             );
+
             saveContainer.style.setProperty(
               "right",
               `${containerWidth + 20}px`,
@@ -1649,7 +1660,6 @@
               `${document.body.clientHeight / 4}px`,
               "important"
             );
-            rightWidgetContainer.style.setProperty("right", `0px`, "important");
 
             settingsContainer.style.setProperty("right", "20px", "important");
             saveContainer.style.setProperty("right", "20px", "important");
@@ -1692,6 +1702,12 @@
               searchBar.parentElement.parentElement.classList.remove("open");
               searchBar.parentElement.parentElement.classList.add("close");
               bottomWidgetContainer.classList.remove("hidden");
+              rightWidgetContainer.style.setProperty(
+                "right",
+                `0px`,
+                "important"
+              );
+
               searchBarState = "closed";
             }
             return;
@@ -1701,6 +1717,7 @@
             searchBar.parentElement.parentElement.classList.remove("close");
             searchBar.parentElement.parentElement.classList.add("open");
             bottomWidgetContainer.classList.add("hidden");
+
             searchBarState = "open";
           }
 
@@ -2200,33 +2217,33 @@
             }
 
             weatherWidgetContainer.innerHTML = `
-        <div id="weather-widget">
-          <div class="today">
-            <div class="weather-main">
-              <span class="material-symbols-outlined" title="${condition}">thermostat</span>
-              <div class="weather-info">
-                <h2>${city}</h2>
-                <p class="temp">${tempF}°F</p>
-                <p class="desc">${condition}</p>
-                <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
-                <p class="detail">🕒 Updated: ${time}</p>
-              </div>
-            </div>
-          </div>
-          <div class="tomorrow">
-            <div class="weather-main">
-              <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
-              <div class="weather-info">
-                <h2>Tomorrow</h2>
-                <p class="temp">${maxTempF}° / ${minTempF}°F</p>
-                <p class="desc">${forecastCondition}</p>
-                <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
-                <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+                <div id="weather-widget">
+                  <div class="today">
+                    <div class="weather-main">
+                      <span class="material-symbols-outlined" title="${condition}">thermostat</span>
+                      <div class="weather-info">
+                        <h2>${city}</h2>
+                        <p class="temp">${tempF}°F</p>
+                        <p class="desc">${condition}</p>
+                        <p class="detail">💨 ${windSpeed} mph ${windDir}</p>
+                        <p class="detail">🕒 Updated: ${time}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tomorrow">
+                    <div class="weather-main">
+                      <span class="material-symbols-outlined" title="${forecastCondition}">calendar_today</span>
+                      <div class="weather-info">
+                        <h2>Tomorrow</h2>
+                        <p class="temp">${maxTempF}° / ${minTempF}°F</p>
+                        <p class="desc">${forecastCondition}</p>
+                        <p class="detail">🌡️ Feels like: ${apparentMaxTempF}° / ${apparentMinTempF}°F</p>
+                        <p class="detail">🌧️ Rain: ${precipitationSum} mm</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              `;
 
             weatherWidget = document.querySelector("#weather-widget");
             if (weatherWidget) {
@@ -2252,10 +2269,10 @@
           } catch (err) {
             console.error("Weather load failed:", err);
             weatherWidgetContainer.innerHTML = `
-        <div class="weather-widget">
-          <p>Unable to load weather. Try again later.</p>
-        </div>
-      `;
+                <div class="weather-widget">
+                  <p>Unable to load weather. Try again later.</p>
+                </div>
+              `;
           }
         }
 
@@ -2439,23 +2456,20 @@
           },
           { capture: true }
         );
-        // Variables to store the cube and its state
         let cube = null;
         let isDragging = false;
         let offsetX, offsetY;
         let velocityX = 0,
           velocityY = 0;
-        let gravity = 0.2; // Gravity constant
-        let friction = 0.99; // Friction to simulate bounce damping
+        let gravity = 0.2;
+        let friction = 0.99;
 
-        // Function to create the cube when "dumbasarock" is typed
         function createCube(x, y) {
-          // Create cube element
           cube = document.createElement("div");
           cube.innerHTML = ":3";
           cube.style.position = "absolute";
-          cube.style.left = `${x - 50}px`; // Center the cube
-          cube.style.top = `${y - 50}px`; // Center the cube
+          cube.style.left = `${x - 50}px`;
+          cube.style.top = `${y - 50}px`;
           cube.style.width = "100px";
           cube.style.height = "100px";
           cube.style.backgroundColor = "gray";
@@ -2470,7 +2484,6 @@
           cube.style.cursor = "grab";
           document.body.appendChild(cube);
 
-          // Add blush effect (animated)
           cube.style.boxShadow = "0 0 15px rgba(255, 110, 110, 0.6)";
           setInterval(() => {
             cube.style.boxShadow =
@@ -2479,14 +2492,12 @@
                 : "0 0 15px rgba(255, 110, 110, 0.6)";
           }, 1000);
 
-          // Add drag events
           cube.addEventListener("mousedown", (e) => {
             isDragging = true;
             offsetX = e.clientX - cube.offsetLeft;
             offsetY = e.clientY - cube.offsetTop;
             cube.style.cursor = "grabbing";
 
-            // Disable physics while dragging
             velocityX = 0;
             velocityY = 0;
           });
@@ -2496,7 +2507,6 @@
               let newLeft = e.clientX - offsetX;
               let newTop = e.clientY - offsetY;
 
-              // Update position while dragging, no boundary check here
               cube.style.left = `${newLeft}px`;
               cube.style.top = `${newTop}px`;
             }
@@ -2507,31 +2517,25 @@
               isDragging = false;
               cube.style.cursor = "grab";
 
-              // Constrain cube position when released, ensuring it stays within the window
               let newLeft = parseFloat(cube.style.left);
               let newTop = parseFloat(cube.style.top);
 
-              // Prevent the cube from going off screen after releasing
               newLeft = Math.max(0, Math.min(window.innerWidth - 100, newLeft));
               newTop = Math.max(0, Math.min(window.innerHeight - 100, newTop));
 
               cube.style.left = `${newLeft}px`;
               cube.style.top = `${newTop}px`;
 
-              // Re-enable physics after drag ends
               velocityX = (newLeft - window.innerWidth / 2) * 0.1;
               velocityY = (newTop - window.innerHeight / 2) * 0.1;
             }
           });
         }
 
-        // Function to simulate gravity and physics for the cube
         function animate() {
           if (cube && !isDragging) {
-            // Apply gravity to the cube
             velocityY += gravity;
 
-            // Apply friction to slow down horizontal movement
             velocityX *= friction;
             velocityY *= friction;
 
@@ -2541,19 +2545,15 @@
             left += velocityX;
             top += velocityY;
 
-            // Simple floor collision check
             if (top > window.innerHeight - 110) {
-              // 100 is the height of the cube
               top = window.innerHeight - 110;
-              velocityY = -velocityY * 0.8; // Bounce with reduced speed
+              velocityY = -velocityY * 0.8;
             }
 
-            // Wall collisions
             if (left < 0 || left > window.innerWidth - 100) {
-              velocityX = -velocityX * 0.8; // Reverse and bounce off walls
+              velocityX = -velocityX * 0.8;
             }
 
-            // Update position
             cube.style.left = `${left}px`;
             cube.style.top = `${top}px`;
           }
@@ -2561,17 +2561,15 @@
           requestAnimationFrame(animate);
         }
 
-        // Listen for user typing "dumbasarock"
         let userInput = "";
         document.addEventListener("keydown", (event) => {
           userInput += event.key;
           if (userInput.toLowerCase().includes("dumbasarock")) {
             createCube(window.innerWidth / 2, window.innerHeight / 2);
-            userInput = ""; // Reset input after spawning cube
+            userInput = "";
           }
         });
 
-        // Start animation loop
         animate();
       }
     </script>
